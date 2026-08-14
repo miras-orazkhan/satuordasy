@@ -21,18 +21,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const formData = await req.formData();
-  const file = formData.get('file');
-  if (!(file instanceof File)) {
-    return NextResponse.json({ error: 'No file provided' }, { status: 400 });
-  }
-
-  // Limit to 10MB
-  if (file.size > 10 * 1024 * 1024) {
-    return NextResponse.json({ error: 'File too large (max 10MB)' }, { status: 413 });
-  }
-
   try {
+    const formData = await req.formData();
+    const file = formData.get('file');
+    if (!(file instanceof File)) {
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    }
+
+    // Limit to 10MB
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File too large (max 10MB)' }, { status: 413 });
+    }
+
     const result = await saveFile(file);
     return NextResponse.json(result);
   } catch (e) {
@@ -41,4 +41,9 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
+}
+
+// GET returns 405 Method Not Allowed — endpoint only accepts POST
+export async function GET() {
+  return NextResponse.json({ error: 'Method Not Allowed' }, { status: 405 });
 }
