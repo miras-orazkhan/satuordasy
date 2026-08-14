@@ -34,22 +34,17 @@ export default async function Home() {
           <Link href="/" className="text-lg md:text-xl font-semibold tracking-tight">
             {brandName}
           </Link>
-          <nav className="flex items-center gap-3 md:gap-6 text-sm">
-            <Link href="/admin" className="text-muted-foreground hover:text-foreground transition-colors">
-              Админка
-            </Link>
-          </nav>
         </div>
       </header>
 
       {/* Hero */}
       <section className="relative h-[70vh] min-h-[480px] w-full overflow-hidden">
         {hero?.hero?.desktopImage ? (
+           
           <img
             src={hero.hero.desktopImage}
             alt={hero.title}
             className="absolute inset-0 h-full w-full object-cover"
-            priority
           />
         ) : (
           <div className="absolute inset-0 bg-muted" />
@@ -80,22 +75,13 @@ export default async function Home() {
               с собственным оформлением и характером.
             </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Всего проектов: <span className="font-semibold text-foreground">{projects.length}</span>
-          </p>
         </div>
 
         {projects.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-muted-foreground">
-              Пока нет опубликованных проектов. Загляните в админку, чтобы создать первый ЖК.
+              Пока нет опубликованных проектов.
             </p>
-            <Link
-              href="/admin"
-              className="inline-flex items-center gap-2 mt-4 text-accent hover:underline"
-            >
-              Открыть админ-панель <ArrowUpRight className="w-4 h-4" />
-            </Link>
           </div>
         ) : (
           <ProjectsTabs projects={projects.map((p) => ({

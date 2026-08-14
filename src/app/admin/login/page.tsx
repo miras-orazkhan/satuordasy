@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
                 required
                 autoComplete="email"
                 autoFocus
-                placeholder="admin@zhk.local"
+                placeholder="you@example.com"
                 className="mt-1.5"
               />
             </div>
@@ -80,12 +80,6 @@ export default function AdminLoginPage() {
               Войти
             </Button>
           </form>
-
-          <div className="mt-6 p-3 rounded-lg bg-muted text-xs text-muted-foreground space-y-1">
-            <p className="font-medium text-foreground">Тестовые аккаунты:</p>
-            <p>Админ: <code>admin@zhk.local</code> / <code>admin123</code></p>
-            <p>Менеджер: <code>manager@zhk.local</code> / <code>manager123</code></p>
-          </div>
         </CardContent>
       </Card>
     </main>

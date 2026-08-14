@@ -61,6 +61,7 @@ export function ProjectsTabs({ projects }: { projects: ProjectItem[] }) {
           className="group relative block aspect-[4/5] md:aspect-[3/4] overflow-hidden rounded-2xl bg-muted"
         >
           {project.heroImage && (
+             
             <img
               src={project.heroImage}
               alt={project.title}
@@ -70,17 +71,6 @@ export function ProjectsTabs({ projects }: { projects: ProjectItem[] }) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
           <div className="absolute top-4 right-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-md text-white transition-transform group-hover:scale-110">
             <ArrowUpRight className="h-5 w-5" />
-          </div>
-          <div className="absolute bottom-5 left-5 right-5">
-            <div className="flex items-center gap-2">
-              <span
-                className="inline-block h-3 w-3 rounded-full"
-                style={{ backgroundColor: project.swatches.accent }}
-              />
-              <span className="text-white/90 text-xs uppercase tracking-wider">
-                {project.themePreset}
-              </span>
-            </div>
           </div>
         </Link>
 
@@ -105,29 +95,7 @@ export function ProjectsTabs({ projects }: { projects: ProjectItem[] }) {
               Перейти к проекту <ArrowUpRight className="h-4 w-4" />
             </Link>
           </div>
-
-          <div className="mt-10 grid grid-cols-3 gap-3 text-xs">
-            <Swatch label="Фон" color={project.swatches.background} />
-            <Swatch label="Текст" color={project.swatches.foreground} />
-            <Swatch label="Акцент" color={project.swatches.accent} />
-          </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function Swatch({ label, color }: { label: string; color: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span
-        className="h-6 w-6 rounded-full border border-border"
-        style={{ backgroundColor: color }}
-        aria-hidden
-      />
-      <div className="leading-tight">
-        <p className="text-foreground/60">{label}</p>
-        <p className="text-foreground font-mono">{color}</p>
       </div>
     </div>
   );

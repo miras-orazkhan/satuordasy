@@ -1,12 +1,17 @@
 /**
  * File upload helper.
- * In dev/sandbox: stores files locally under /public/uploads/.
- * In production: would be replaced by R2/S3 adapter (same interface — upload(file) -> url).
+ * In dev/sandbox: stores files locally under an absolute /home/z/my-project/public/uploads/.
+ * In production: replace saveFile() with an R2/S3 adapter that uploads to Cloudflare R2 / S3.
+ *
+ * IMPORTANT: do NOT use process.cwd() — in Next.js standalone build, cwd is .next/standalone
+ * and `public/` is not necessarily there. Use an absolute path instead.
  */
 import path from 'node:path';
 import fs from 'node:fs/promises';
 
-const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
+// Absolute upload directory (project root + public/uploads)
+const PROJECT_ROOT = process.env.PROJECT_ROOT || '/home/z/my-project';
+const UPLOAD_DIR = path.join(PROJECT_ROOT, 'public', 'uploads');
 
 export type UploadedFile = {
   url: string; // public URL, e.g. /uploads/abc-123.jpg
