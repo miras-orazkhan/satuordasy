@@ -15,7 +15,9 @@ import { LeadFormSection } from '@/components/public/sections/lead-form-section'
 import { FooterSection } from '@/components/public/sections/footer-section';
 import { ProjectHeader } from '@/components/public/project-header';
 
-export const revalidate = 60;
+// Render at request time (no DB at build time on Vercel)
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 type Params = { params: Promise<{ slug: string }> };
 

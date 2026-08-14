@@ -5,7 +5,9 @@ import { ProjectsTabs } from '@/components/public/projects-tabs';
 import { ArrowUpRight } from 'lucide-react';
 import { getThemePreset } from '@/lib/theme-presets';
 
-export const revalidate = 60;
+// Render at request time (no DB at build time on Vercel)
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function Home() {
   const projects = await db.project.findMany({

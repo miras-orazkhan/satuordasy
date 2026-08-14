@@ -55,8 +55,13 @@ export async function setSettings(values: Record<string, string>): Promise<void>
 }
 
 export async function getPrivacyPolicy(): Promise<string> {
-  const row = await db.privacyPolicy.findUnique({ where: { id: 'singleton' } });
-  return row?.content ?? DEFAULT_PRIVACY;
+  try {
+    const row = await db.privacyPolicy.findUnique({ where: { id: 'singleton' } });
+    return row?.content ?? DEFAULT_PRIVACY;
+  } catch {
+    // DB not available (build time on Vercel)
+    return DEFAULT_PRIVACY;
+  }
 }
 
 export async function setPrivacyPolicy(content: string): Promise<void> {

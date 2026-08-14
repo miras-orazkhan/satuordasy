@@ -1,12 +1,13 @@
 // Prisma schema for ЖК Landing Constructor
-// Note: uses SQLite locally for dev. Same schema works on Postgres (Neon) for production.
+// Production: PostgreSQL (Neon). Connection string is in DATABASE_URL env var.
 
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
