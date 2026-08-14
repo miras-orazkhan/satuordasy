@@ -1,52 +1,153 @@
 /**
  * File upload helper.
- * In dev/sandbox: stores files locally under an absolute /home/z/my-project/public/uploads/.
- * In production: replace saveFile() with an R2/S3 adapter that uploads to Cloudflare R2 / S3.
  *
- * IMPORTANT: do NOT use process.cwd() — in Next.js standalone build, cwd is .next/standalone
- * and `public/` is not necessarily there. Use an absolute path instead.
+ * Production (Vercel): uses Cloudflare R2 via S3-compatible API.
+ *   Required env vars:
+ *     R2_ACCOUNT_ID
+ *     R2_ACCESS_KEY_ID
+ *     R2_SECRET_ACCESS_KEY
+ *     R2_BUCKET_NAME
+ *     R2_PUBLIC_URL  (e.g. https://cdn.satuordasy.com or https://pub-xxx.r2.dev)
+ *
+ * Fallback (no R2 configured): writes to /tmp/uploads (only writable dir on Vercel
+ * serverless). Note: /tmp is NOT persistent — files are lost on cold start.
+ * Suitable for local dev only.
  */
 import path from 'node:path';
 import fs from 'node:fs/promises';
-
-// Absolute upload directory (project root + public/uploads)
-const PROJECT_ROOT = process.env.PROJECT_ROOT || '/home/z/my-project';
-const UPLOAD_DIR = path.join(PROJECT_ROOT, 'public', 'uploads');
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 export type UploadedFile = {
-  url: string; // public URL, e.g. /uploads/abc-123.jpg
+  url: string; // public URL, e.g. https://cdn.satuordasy.com/uploads/abc-123.jpg
   filename: string;
   size: number;
 };
 
-export async function saveFile(file: File): Promise<UploadedFile> {
-  // Ensure dir exists
-  await fs.mkdir(UPLOAD_DIR, { recursive: true });
+const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.svg', '.pdf', '.gif'];
 
-  const buf = Buffer.from(await file.arrayBuffer());
-  const ext = path.extname(file.name).toLowerCase().slice(0, 8) || '.bin';
-  // Whitelist extensions
-  const allowed = ['.jpg', '.jpeg', '.png', '.webp', '.svg', '.pdf', '.gif'];
-  const safeExt = allowed.includes(ext) ? ext : '.bin';
+function isR2Configured(): boolean {
+  return Boolean(
+    process.env.R2_ACCOUNT_ID &&
+      process.env.R2_ACCESS_KEY_ID &&
+      process.env.R2_SECRET_ACCESS_KEY &&
+      process.env.R2_BUCKET_NAME &&
+      process.env.R2_PUBLIC_URL
+  );
+}
 
+function getR2Client(): S3Client {
+  return new S3Client({
+    region: 'auto',
+    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+    },
+  });
+}
+
+function sanitizeExtension(name: string): string {
+  const ext = path.extname(name).toLowerCase().slice(0, 8) || '.bin';
+  return ALLOWED_EXTENSIONS.includes(ext) ? ext : '.bin';
+}
+
+function generateKey(name: string): string {
   const id = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-  const filename = `${id}${safeExt}`;
-  const filepath = path.join(UPLOAD_DIR, filename);
+  return `uploads/${id}${sanitizeExtension(name)}`;
+}
+
+async function uploadToR2(file: File, key: string): Promise<string> {
+  const buf = Buffer.from(await file.arrayBuffer());
+  const ext = path.extname(key);
+  const contentType: Record<string, string> = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.webp': 'image/webp',
+    '.gif': 'image/gif',
+    '.svg': 'image/svg+xml',
+    '.pdf': 'application/pdf',
+    '.bin': 'application/octet-stream',
+  };
+
+  await getR2Client().send(
+    new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME!,
+      Key: key,
+      Body: buf,
+      ContentType: contentType[ext] ?? 'application/octet-stream',
+      CacheControl: 'public, max-age=31536000, immutable',
+    })
+  );
+
+  // Return public URL
+  const baseUrl = process.env.R2_PUBLIC_URL!.replace(/\/+$/, '');
+  return `${baseUrl}/${key}`;
+}
+
+async function uploadToLocal(file: File): Promise<{ url: string; key: string }> {
+  // Vercel: only /tmp is writable. Local dev: use ./public/uploads.
+  const uploadDir = process.env.VERCEL ? '/tmp/uploads' : path.join(process.cwd(), 'public', 'uploads');
+  await fs.mkdir(uploadDir, { recursive: true });
+
+  const key = generateKey(file.name);
+  const filename = path.basename(key);
+  const buf = Buffer.from(await file.arrayBuffer());
+  const filepath = path.join(uploadDir, filename);
   await fs.writeFile(filepath, buf);
 
+  // On Vercel, /tmp is not web-accessible; we serve via /api/uploads/[...path]
+  // On local dev, /public/uploads/ is served directly by Next.js.
+  const url = process.env.VERCEL ? `/api/uploads/${filename}` : `/uploads/${filename}`;
+  return { url, key };
+}
+
+export async function saveFile(file: File): Promise<UploadedFile> {
+  if (isR2Configured()) {
+    const key = generateKey(file.name);
+    const url = await uploadToR2(file, key);
+    return {
+      url,
+      filename: file.name,
+      size: file.size,
+    };
+  }
+
+  // Fallback: local /tmp or ./public/uploads
+  const { url } = await uploadToLocal(file);
   return {
-    url: `/uploads/${filename}`,
+    url,
     filename: file.name,
     size: file.size,
   };
 }
 
 export async function deleteFile(url: string): Promise<void> {
-  if (!url.startsWith('/uploads/')) return;
-  const filepath = path.join(UPLOAD_DIR, path.basename(url));
-  try {
-    await fs.unlink(filepath);
-  } catch {
-    // ignore — file may not exist
+  // R2 delete
+  if (isR2Configured() && process.env.R2_PUBLIC_URL && url.startsWith(process.env.R2_PUBLIC_URL)) {
+    const key = url.slice(process.env.R2_PUBLIC_URL.length).replace(/^\/+/, '');
+    try {
+      await getR2Client().send(
+        new DeleteObjectCommand({
+          Bucket: process.env.R2_BUCKET_NAME!,
+          Key: key,
+        })
+      );
+    } catch {
+      // ignore — file may not exist
+    }
+    return;
+  }
+
+  // Local delete (dev only)
+  if (url.startsWith('/uploads/') || url.startsWith('/api/uploads/')) {
+    const filename = path.basename(url);
+    const uploadDir = process.env.VERCEL ? '/tmp/uploads' : path.join(process.cwd(), 'public', 'uploads');
+    const filepath = path.join(uploadDir, filename);
+    try {
+      await fs.unlink(filepath);
+    } catch {
+      // ignore
+    }
   }
 }

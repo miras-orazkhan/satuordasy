@@ -8,8 +8,10 @@ import { saveFile } from '@/lib/storage';
  * Accepts multipart/form-data with a single `file` field.
  * Returns { url, filename, size }.
  *
- * In production: replace `saveFile` with an R2/S3 adapter that uploads
- * to Cloudflare R2 / S3 and returns the public URL. The DB only stores the URL.
+ * Files are stored in:
+ *   - Cloudflare R2 (if R2_* env vars are set) — production
+ *   - /tmp/uploads on Vercel (if no R2) — preview only, NOT persistent
+ *   - ./public/uploads in local dev
  */
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);

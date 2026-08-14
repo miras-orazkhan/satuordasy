@@ -1,9 +1,10 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
-// Serve uploaded files from /tmp/uploads (Vercel) or ./public/uploads (local dev).
-// On Vercel serverless, only /tmp is writable, so files written there are served via this route.
-// In production with R2 configured, this route is not used — files are served directly from R2_PUBLIC_URL.
+// Serve files stored in /tmp/uploads (Vercel fallback when R2 is not configured).
+// On Vercel serverless, /tmp is the only writable directory.
+// Note: /tmp is NOT persistent across cold starts — files will be lost when the
+// serverless function spins down. For production use, configure R2 (see storage.ts).
 
 function getUploadDir(): string {
   return process.env.VERCEL ? '/tmp/uploads' : path.join(process.cwd(), 'public', 'uploads');
@@ -14,7 +15,6 @@ export async function GET(
   { params }: { params: Promise<{ path: string[] }> }
 ) {
   const { path: pathSegments } = await params;
-  // Sanitize path — reject any .. traversal
   const joined = pathSegments.join('/');
   if (joined.includes('..') || path.isAbsolute(joined)) {
     return new Response('Forbidden', { status: 403 });
@@ -22,7 +22,6 @@ export async function GET(
 
   const uploadDir = getUploadDir();
   const filepath = path.join(uploadDir, joined);
-  // Final realpath check
   const realUpload = await fs.realpath(uploadDir).catch(() => uploadDir);
   const realFile = await fs.realpath(filepath).catch(() => null);
   if (!realFile || !realFile.startsWith(realUpload)) {
@@ -31,7 +30,6 @@ export async function GET(
 
   try {
     const buf = await fs.readFile(filepath);
-    // Determine content type from extension
     const ext = path.extname(filepath).toLowerCase();
     const types: Record<string, string> = {
       '.jpg': 'image/jpeg',
