@@ -52,3 +52,10 @@ prompt
 server.log
 # Skills directory
 /skills/
+# Database files (local SQLite; production uses Neon)
+/db/
+*.db
+*.db-journal
+
+# User uploads (in production: R2/S3, not git)
+/public/uploads/
