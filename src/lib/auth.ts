@@ -7,6 +7,11 @@ export const authOptions: NextAuthOptions = {
   // NOTE: using a static secret for the dev sandbox. Override NEXTAUTH_SECRET in production.
   secret: process.env.NEXTAUTH_SECRET ?? 'zhk-constructor-dev-secret-change-me',
   session: { strategy: 'jwt' },
+  // trustHost: lets NextAuth derive its base URL from request headers (works behind Vercel proxy)
+  // when NEXTAUTH_URL is not explicitly set. Without this, NextAuth in v4 may fail on
+  // serverless hosts where Host/Origin headers differ from the canonical URL.
+  useSecureCookies: process.env.NODE_ENV === 'production',
+  trustHost: true,
   pages: {
     signIn: '/admin/login',
   },

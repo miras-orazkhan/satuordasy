@@ -6,9 +6,7 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // IMPORTANT: Server Actions in Next.js 16 reject requests when x-forwarded-host
-  // doesn't match origin. When running behind a cloud gateway (e.g. space-z.ai preview
-  // → fcapp.run), these headers diverge. Normalize x-forwarded-host to the actual
-  // origin so Server Actions accept the request.
+  // doesn't match origin. When running behind a cloud gateway, normalize the headers.
   const origin = req.headers.get('origin');
   const forwardedHost = req.headers.get('x-forwarded-host');
   const requestHeaders = new Headers(req.headers);
@@ -25,11 +23,18 @@ export async function middleware(req: NextRequest) {
 
   // Auth check for /admin/* routes (except login)
   if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
+    // IMPORTANT: NextAuth uses different cookie names on http vs https:
+    //   http:  next-auth.session-token
+    //   https: __Secure-next-auth.session-token
+    // Vercel is HTTPS in production → __Secure- prefix is used.
+    // We try both names so the middleware works in both dev and prod.
+    const isHttps = req.nextUrl.protocol === 'https:' || req.headers.get('x-forwarded-proto') === 'https';
+    const cookieName = isHttps ? '__Secure-next-auth.session-token' : 'next-auth.session-token';
+
     const token = await getToken({
       req,
       secret: process.env.NEXTAUTH_SECRET ?? 'zhk-constructor-dev-secret-change-me',
-      // In production behind https, NextAuth uses __Secure-prefix; on http — no prefix.
-      cookieName: 'next-auth.session-token',
+      cookieName,
     });
 
     if (!token) {

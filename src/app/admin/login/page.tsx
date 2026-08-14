@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,7 +11,6 @@ import { Loader2, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const search = useSearchParams();
   const callbackUrl = search.get('callbackUrl') || '/admin';
   const [loading, setLoading] = useState(false);
@@ -23,15 +22,29 @@ export default function AdminLoginPage() {
     const email = String(formData.get('email') || '');
     const password = String(formData.get('password') || '');
 
-    const res = await signIn('credentials', { email, password, redirect: false });
+    // IMPORTANT: use redirect: true so the browser does a full HTTP redirect
+    // to callbackUrl. With redirect: false + router.push, the cookie may not
+    // be set in time for the middleware to see it on the next request, causing
+    // an infinite redirect loop back to /admin/login.
+    const res = await signIn('credentials', {
+      email,
+      password,
+      callbackUrl,
+      redirect: false,
+    });
     setLoading(false);
     if (res?.error) {
       toast.error('Неверный email или пароль');
       return;
     }
     toast.success('Вход выполнен');
-    router.push(callbackUrl);
-    router.refresh();
+    // Use a hard navigation (window.location) instead of router.push to ensure
+    // the just-set authentication cookie is sent with the next request.
+    if (res?.url) {
+      window.location.href = res.url;
+    } else {
+      window.location.href = callbackUrl;
+    }
   }
 
   return (
