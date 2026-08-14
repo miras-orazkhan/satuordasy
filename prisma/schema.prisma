@@ -1,0 +1,193 @@
+// Prisma schema for ЖК Landing Constructor
+// Note: uses SQLite locally for dev. Same schema works on Postgres (Neon) for production.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- AUTH ----------
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  role         String   @default("manager") // "admin" | "manager"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ---------- PROJECTS (ЖК) ----------
+model Project {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  title          String
+  status         String   @default("draft") // "draft" | "published"
+  themePreset    String   @default("noir")
+  fontPreset     String   @default("inter")
+
+  // SEO
+  seoTitle       String?
+  seoDescription String?
+  seoKeywords    String?
+  ogImageUrl     String?
+
+  // GEO
+  geoRegion      String?
+  geoCity        String?
+  geoLat         Float?
+  geoLng         Float?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  hero            HeroBlock?
+  about           AboutSection?
+  gallery         GalleryImage[]
+  advantages      Advantage[]
+  floorCategories FloorPlanCategory[]
+  interiors       InteriorItem[]
+  catalog         Catalog?
+  socials         SocialLink[]
+  leads           Lead[]
+}
+
+model HeroBlock {
+  id            String  @id @default(cuid())
+  projectId     String  @unique
+  project       Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title         String
+  subtitle      String?
+  ctaText       String  @default("Оставить заявку")
+  desktopImage  String?
+  mobileImage   String?
+}
+
+model Advantage {
+  id          String  @id @default(cuid())
+  projectId   String
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  icon        String? // lucide icon name or "custom:<svg-url>"
+  sortOrder   Int     @default(0)
+
+  @@index([projectId])
+}
+
+model AboutSection {
+  id            String         @id @default(cuid())
+  projectId     String         @unique
+  project       Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  description   String
+  mapEmbedUrl   String? // iframe src (Yandex/Google Maps)
+  mapLat        Float?
+  mapLng        Float?
+  nearby        NearbyObject[]
+}
+
+model NearbyObject {
+  id        String       @id @default(cuid())
+  aboutId   String
+  about     AboutSection @relation(fields: [aboutId], references: [id], onDelete: Cascade)
+  name      String
+  distance  String // e.g. "5 мин пешком"
+  sortOrder Int @default(0)
+
+  @@index([aboutId])
+}
+
+model GalleryImage {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  url       String
+  caption   String?
+  sortOrder Int     @default(0)
+
+  @@index([projectId])
+}
+
+model FloorPlanCategory {
+  id        String           @id @default(cuid())
+  projectId String
+  project   Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  sortOrder Int              @default(0)
+  units     FloorPlanUnit[]
+
+  @@index([projectId])
+}
+
+model FloorPlanUnit {
+  id         String             @id @default(cuid())
+  categoryId String
+  category   FloorPlanCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name       String?
+  area       Float
+  imageUrl   String?
+  sortOrder  Int                @default(0)
+
+  @@index([categoryId])
+}
+
+model InteriorItem {
+  id          String  @id @default(cuid())
+  projectId   String
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  imageUrl    String
+  caption     String?
+  description String?
+  sortOrder   Int     @default(0)
+
+  @@index([projectId])
+}
+
+model Catalog {
+  id        String  @id @default(cuid())
+  projectId String  @unique
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fileUrl   String
+  fileName  String?
+}
+
+model SocialLink {
+  id        String   @id @default(cuid())
+  projectId String?  // null = global (used as default for all projects)
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  platform  String
+  url       String
+  icon      String? // lucide icon name
+  sortOrder Int      @default(0)
+}
+
+model Lead {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String
+  comment   String?
+  status    String   @default("new") // new | in_progress | done | rejected
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([status])
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}
+
+model PrivacyPolicy {
+  id        String   @id @default("singleton")
+  content   String
+  updatedAt DateTime @updatedAt
+}
