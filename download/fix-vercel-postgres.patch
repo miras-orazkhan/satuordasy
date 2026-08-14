@@ -1,0 +1,232 @@
+From bf27816e48f79a07b3edd6b1308e81f4b4c22810 Mon Sep 17 00:00:00 2001
+From: Z User <z@container>
+Date: Fri, 14 Aug 2026 10:00:49 +0000
+Subject: [PATCH] fix: switch Prisma to PostgreSQL for Vercel/Neon deployment
+
+- prisma/schema.prisma: provider = postgresql, binaryTargets includes rhel-openssl-3.0.x
+  (Vercel build environment uses RHEL with OpenSSL 3.x)
+- package.json: added postinstall script (prisma generate runs on Vercel install),
+  added @prisma/adapter-neon, simplified build script (no standalone copy needed on Vercel)
+- next.config.ts: removed output: standalone (Vercel handles automatically),
+  added satuordasy.com and *.vercel.app to allowedOrigins for Server Actions
+- src/app/page.tsx + src/app/zhk/[slug]/page.tsx: dynamic = force-dynamic, revalidate = 0
+  (these pages query DB and must render at request time, not at build time)
+- src/lib/settings.ts: getPrivacyPolicy wrapped in try/catch for build time
+- Without these changes Vercel build fails with:
+  'Error validating datasource db: the URL must start with the protocol file:'
+  because schema.prisma said sqlite but DATABASE_URL was postgres://...
+---
+ bun.lock                    | 17 ++++++++++++++++-
+ next.config.ts              | 12 +++++++-----
+ package.json                |  8 +++++---
+ prisma/schema.prisma        |  5 +++--
+ src/app/page.tsx            |  4 +++-
+ src/app/zhk/[slug]/page.tsx |  4 +++-
+ src/lib/settings.ts         |  9 +++++++--
+ 7 files changed, 44 insertions(+), 15 deletions(-)
+ mode change 100755 => 100644 bun.lock
+
+diff --git a/bun.lock b/bun.lock
+old mode 100755
+new mode 100644
+index ba2e9b5..3d6b7f3
+--- a/bun.lock
++++ b/bun.lock
+@@ -10,6 +10,7 @@
+         "@dnd-kit/utilities": "^3.2.2",
+         "@hookform/resolvers": "^5.1.1",
+         "@mdxeditor/editor": "^3.39.1",
++        "@prisma/adapter-neon": "^7.9.1",
+         "@prisma/client": "^6.11.1",
+         "@radix-ui/react-accordion": "^1.2.11",
+         "@radix-ui/react-alert-dialog": "^1.1.14",
+@@ -402,6 +403,8 @@
+ 
+     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@0.2.12", "https://registry.npmjs.com/@napi-rs/wasm-runtime/-/wasm-runtime-0.2.12.tgz", { "dependencies": { "@emnapi/core": "^1.4.3", "@emnapi/runtime": "^1.4.3", "@tybys/wasm-util": "^0.10.0" } }, "sha512-ZVWUcfwY4E/yPitQJl481FjFo3K22D6qF0DuFH6Y/nbnE11GY5uguDxZMGXPQ8WQ0128MXQD7TnfHyK4oWoIJQ=="],
+ 
++    "@neondatabase/serverless": ["@neondatabase/serverless@1.1.0", "", {}, "sha512-r3ZZhRjEcfEdKIZnoB1RusNgvHuaBRqfCzV4Gi+5A9yUX0S4HTws/ASWqt13wL4y4I+0rqsWGdA2w7EQXHi3+Q=="],
++
+     "@next/env": ["@next/env@16.1.3", "https://registry.npmjs.com/@next/env/-/env-16.1.3.tgz", {}, "sha512-BLP14oBOvZWXgfdJf9ao+VD8O30uE+x7PaV++QtACLX329WcRSJRO5YJ+Bcvu0Q+c/lei41TjSiFf6pXqnpbQA=="],
+ 
+     "@next/eslint-plugin-next": ["@next/eslint-plugin-next@16.1.3", "https://registry.npmjs.com/@next/eslint-plugin-next/-/eslint-plugin-next-16.1.3.tgz", { "dependencies": { "fast-glob": "3.3.1" } }, "sha512-MqBh3ltFAy0AZCRFVdjVjjeV7nEszJDaVIpDAnkQcn8U9ib6OEwkSnuK6xdYxMGPhV/Y4IlY6RbDipPOpLfBqQ=="],
+@@ -462,11 +465,15 @@
+ 
+     "@parcel/watcher-win32-x64": ["@parcel/watcher-win32-x64@2.5.4", "https://registry.npmjs.com/@parcel/watcher-win32-x64/-/watcher-win32-x64-2.5.4.tgz", { "os": "win32", "cpu": "x64" }, "sha512-3A6efb6BOKwyw7yk9ro2vus2YTt2nvcd56AuzxdMiVOxL9umDyN5PKkKfZ/gZ9row41SjVmTVQNWQhaRRGpOKw=="],
+ 
++    "@prisma/adapter-neon": ["@prisma/adapter-neon@7.9.1", "", { "dependencies": { "@neondatabase/serverless": ">0.6.0 <2", "@prisma/driver-adapter-utils": "7.9.1", "postgres-array": "3.0.4" } }, "sha512-YqJYuohI03da41N4X+DaA9RlQGWrA4gND24TIkuPPXAsNpnMlFuSfTgUycP4UXiGr7nwZ8PeQIUqMxaYzaAcNw=="],
++
+     "@prisma/client": ["@prisma/client@6.19.2", "https://registry.npmjs.com/@prisma/client/-/client-6.19.2.tgz", { "peerDependencies": { "prisma": "*", "typescript": ">=5.1.0" }, "optionalPeers": ["prisma", "typescript"] }, "sha512-gR2EMvfK/aTxsuooaDA32D8v+us/8AAet+C3J1cc04SW35FPdZYgLF+iN4NDLUgAaUGTKdAB0CYenu1TAgGdMg=="],
+ 
+     "@prisma/config": ["@prisma/config@6.19.2", "https://registry.npmjs.com/@prisma/config/-/config-6.19.2.tgz", { "dependencies": { "c12": "3.1.0", "deepmerge-ts": "7.1.5", "effect": "3.18.4", "empathic": "2.0.0" } }, "sha512-kadBGDl+aUswv/zZMk9Mx0C8UZs1kjao8H9/JpI4Wh4SHZaM7zkTwiKn/iFLfRg+XtOAo/Z/c6pAYhijKl0nzQ=="],
+ 
+-    "@prisma/debug": ["@prisma/debug@6.19.2", "https://registry.npmjs.com/@prisma/debug/-/debug-6.19.2.tgz", {}, "sha512-lFnEZsLdFLmEVCVNdskLDCL8Uup41GDfU0LUfquw+ercJC8ODTuL0WNKgOKmYxCJVvFwf0OuZBzW99DuWmoH2A=="],
++    "@prisma/debug": ["@prisma/debug@7.9.1", "", {}, "sha512-/cpVZ4itxtcgB8GHBvZtcmuEjq+lWsLrRJxFMbwZrT1RIdtuKmUm7PPGo/wzfbYpBrk+9WmmBE8CHJw2rybKDQ=="],
++
++    "@prisma/driver-adapter-utils": ["@prisma/driver-adapter-utils@7.9.1", "", { "dependencies": { "@prisma/debug": "7.9.1" } }, "sha512-vmHehG7nn/heW32DXXpp13DxxAxVVe6n250oEt3dOL2E/4bt3olktKZN0mzSuxMMronyMSkbeW2uCOn3F4g8RQ=="],
+ 
+     "@prisma/engines": ["@prisma/engines@6.19.2", "https://registry.npmjs.com/@prisma/engines/-/engines-6.19.2.tgz", { "dependencies": { "@prisma/debug": "6.19.2", "@prisma/engines-version": "7.1.1-3.c2990dca591cba766e3b7ef5d9e8a84796e47ab7", "@prisma/fetch-engine": "6.19.2", "@prisma/get-platform": "6.19.2" } }, "sha512-TTkJ8r+uk/uqczX40wb+ODG0E0icVsMgwCTyTHXehaEfb0uo80M9g1aW1tEJrxmFHeOZFXdI2sTA1j1AgcHi4A=="],
+ 
+@@ -1560,6 +1567,8 @@
+ 
+     "postcss": ["postcss@8.5.6", "https://registry.npmjs.com/postcss/-/postcss-8.5.6.tgz", { "dependencies": { "nanoid": "^3.3.11", "picocolors": "^1.1.1", "source-map-js": "^1.2.1" } }, "sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg=="],
+ 
++    "postgres-array": ["postgres-array@3.0.4", "", {}, "sha512-nAUSGfSDGOaOAEGwqsRY27GPOea7CNipJPOA7lPbdEpx5Kg3qzdP0AaWC5MlhTWV9s4hFX39nomVZ+C4tnGOJQ=="],
++
+     "preact": ["preact@10.28.2", "https://registry.npmjs.com/preact/-/preact-10.28.2.tgz", {}, "sha512-lbteaWGzGHdlIuiJ0l2Jq454m6kcpI1zNje6d8MlGAFlYvP2GO4ibnat7P74Esfz4sPTdM6UxtTwh/d3pwM9JA=="],
+ 
+     "preact-render-to-string": ["preact-render-to-string@5.2.6", "https://registry.npmjs.com/preact-render-to-string/-/preact-render-to-string-5.2.6.tgz", { "dependencies": { "pretty-format": "^3.8.0" }, "peerDependencies": { "preact": ">=10" } }, "sha512-JyhErpYOvBV1hEPwIxc/fHWXPfnEGdRKxc8gFdAZ7XV4tlzyzG847XAyEZqoDnynP88akM4eaHcSOzNcLWFguw=="],
+@@ -1858,6 +1867,12 @@
+ 
+     "@formatjs/ecma402-abstract/@formatjs/intl-localematcher": ["@formatjs/intl-localematcher@0.6.2", "https://registry.npmjs.com/@formatjs/intl-localematcher/-/intl-localematcher-0.6.2.tgz", { "dependencies": { "tslib": "^2.8.0" } }, "sha512-XOMO2Hupl0wdd172Y06h6kLpBz6Dv+J4okPLl4LPtzbr8f66WbIoy4ev98EBuZ6ZK4h5ydTN6XneT4QVpD7cdA=="],
+ 
++    "@prisma/engines/@prisma/debug": ["@prisma/debug@6.19.2", "https://registry.npmjs.com/@prisma/debug/-/debug-6.19.2.tgz", {}, "sha512-lFnEZsLdFLmEVCVNdskLDCL8Uup41GDfU0LUfquw+ercJC8ODTuL0WNKgOKmYxCJVvFwf0OuZBzW99DuWmoH2A=="],
++
++    "@prisma/fetch-engine/@prisma/debug": ["@prisma/debug@6.19.2", "https://registry.npmjs.com/@prisma/debug/-/debug-6.19.2.tgz", {}, "sha512-lFnEZsLdFLmEVCVNdskLDCL8Uup41GDfU0LUfquw+ercJC8ODTuL0WNKgOKmYxCJVvFwf0OuZBzW99DuWmoH2A=="],
++
++    "@prisma/get-platform/@prisma/debug": ["@prisma/debug@6.19.2", "https://registry.npmjs.com/@prisma/debug/-/debug-6.19.2.tgz", {}, "sha512-lFnEZsLdFLmEVCVNdskLDCL8Uup41GDfU0LUfquw+ercJC8ODTuL0WNKgOKmYxCJVvFwf0OuZBzW99DuWmoH2A=="],
++
+     "@radix-ui/react-alert-dialog/@radix-ui/react-slot": ["@radix-ui/react-slot@1.2.3", "https://registry.npmjs.com/@radix-ui/react-slot/-/react-slot-1.2.3.tgz", { "dependencies": { "@radix-ui/react-compose-refs": "1.1.2" }, "peerDependencies": { "@types/react": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react"] }, "sha512-aeNmHnBxbi2St0au6VBVC7JXFlhLlOnvIIlePNniyUNAClzmtAUEY8/pBiK3iHjufOlwA+c20/8jngo7xcrg8A=="],
+ 
+     "@radix-ui/react-aspect-ratio/@radix-ui/react-primitive": ["@radix-ui/react-primitive@2.1.4", "https://registry.npmjs.com/@radix-ui/react-primitive/-/react-primitive-2.1.4.tgz", { "dependencies": { "@radix-ui/react-slot": "1.2.4" }, "peerDependencies": { "@types/react": "*", "@types/react-dom": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc", "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react", "@types/react-dom"] }, "sha512-9hQc4+GNVtJAIEPEqlYqW5RiYdrr8ea5XQ0ZOnD6fgru+83kqT15mq2OCcbe8KnjRZl5vF3ks69AKz3kh1jrhg=="],
+diff --git a/next.config.ts b/next.config.ts
+index 74ff196..0200bf5 100755
+--- a/next.config.ts
++++ b/next.config.ts
+@@ -1,26 +1,28 @@
+ import type { NextConfig } from "next";
+ 
+ const nextConfig: NextConfig = {
+-  output: "standalone",
++  // No "output: standalone" — Vercel handles deployment automatically.
+   typescript: {
+     ignoreBuildErrors: true,
+   },
+   reactStrictMode: false,
+ 
+-  // The app is served behind a Caddy + cloud gateway that rewrites Host/Origin.
+-  // Server Actions in Next.js 16 reject requests where x-forwarded-host != origin,
+-  // which broke all server actions (lead submit, status changes, file uploads).
+-  // allowRefererOrigin lets Server Actions accept these forwarded requests.
++  // The app may be served behind a cloud gateway that rewrites Host/Origin.
++  // Server Actions in Next.js 16 reject requests where x-forwarded-host != origin.
++  // List all known gateway hosts here.
+   experimental: {
+     serverActions: {
+       allowedOrigins: [
+         'localhost',
+         'localhost:3000',
+         'localhost:81',
++        'satuordasy.com',
++        'www.satuordasy.com',
+         'preview-chat-91e9baa3-b6cc-4f59-8c26-edd8b275b5a5.space-z.ai',
+         'ws-ff-ae-a-fea-iepkghkhtz.cn-hongkong-vpc.fcapp.run',
+         '*.space-z.ai',
+         '*.fcapp.run',
++        '*.vercel.app',
+       ],
+     },
+   },
+diff --git a/package.json b/package.json
+index 1b93f1a..e640cb1 100755
+--- a/package.json
++++ b/package.json
+@@ -4,14 +4,15 @@
+   "private": true,
+   "scripts": {
+     "dev": "next dev -p 3000 2>&1 | tee dev.log",
+-    "build": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
+-    "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
++    "build": "next build",
++    "start": "next start",
+     "lint": "eslint .",
+     "db:push": "prisma db push --accept-data-loss",
+     "db:generate": "prisma generate",
+     "db:migrate": "prisma migrate dev",
+     "db:reset": "prisma migrate reset",
+-    "db:seed": "bun run scripts/seed.ts"
++    "db:seed": "bun run scripts/seed.ts",
++    "postinstall": "prisma generate"
+   },
+   "dependencies": {
+     "@dnd-kit/core": "^6.3.1",
+@@ -19,6 +20,7 @@
+     "@dnd-kit/utilities": "^3.2.2",
+     "@hookform/resolvers": "^5.1.1",
+     "@mdxeditor/editor": "^3.39.1",
++    "@prisma/adapter-neon": "^7.9.1",
+     "@prisma/client": "^6.11.1",
+     "@radix-ui/react-accordion": "^1.2.11",
+     "@radix-ui/react-alert-dialog": "^1.1.14",
+diff --git a/prisma/schema.prisma b/prisma/schema.prisma
+index 464f455..2431107 100755
+--- a/prisma/schema.prisma
++++ b/prisma/schema.prisma
+@@ -1,12 +1,13 @@
+ // Prisma schema for ЖК Landing Constructor
+-// Note: uses SQLite locally for dev. Same schema works on Postgres (Neon) for production.
++// Production: PostgreSQL (Neon). Connection string is in DATABASE_URL env var.
+ 
+ generator client {
+   provider = "prisma-client-js"
++  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+ }
+ 
+ datasource db {
+-  provider = "sqlite"
++  provider = "postgresql"
+   url      = env("DATABASE_URL")
+ }
+ 
+diff --git a/src/app/page.tsx b/src/app/page.tsx
+index d320290..d9b6d41 100755
+--- a/src/app/page.tsx
++++ b/src/app/page.tsx
+@@ -5,7 +5,9 @@ import { ProjectsTabs } from '@/components/public/projects-tabs';
+ import { ArrowUpRight } from 'lucide-react';
+ import { getThemePreset } from '@/lib/theme-presets';
+ 
+-export const revalidate = 60;
++// Render at request time (no DB at build time on Vercel)
++export const dynamic = 'force-dynamic';
++export const revalidate = 0;
+ 
+ export default async function Home() {
+   const projects = await db.project.findMany({
+diff --git a/src/app/zhk/[slug]/page.tsx b/src/app/zhk/[slug]/page.tsx
+index 695e818..eb51c31 100755
+--- a/src/app/zhk/[slug]/page.tsx
++++ b/src/app/zhk/[slug]/page.tsx
+@@ -15,7 +15,9 @@ import { LeadFormSection } from '@/components/public/sections/lead-form-section'
+ import { FooterSection } from '@/components/public/sections/footer-section';
+ import { ProjectHeader } from '@/components/public/project-header';
+ 
+-export const revalidate = 60;
++// Render at request time (no DB at build time on Vercel)
++export const dynamic = 'force-dynamic';
++export const revalidate = 0;
+ 
+ type Params = { params: Promise<{ slug: string }> };
+ 
+diff --git a/src/lib/settings.ts b/src/lib/settings.ts
+index d021f90..77c99c5 100755
+--- a/src/lib/settings.ts
++++ b/src/lib/settings.ts
+@@ -55,8 +55,13 @@ export async function setSettings(values: Record<string, string>): Promise<void>
+ }
+ 
+ export async function getPrivacyPolicy(): Promise<string> {
+-  const row = await db.privacyPolicy.findUnique({ where: { id: 'singleton' } });
+-  return row?.content ?? DEFAULT_PRIVACY;
++  try {
++    const row = await db.privacyPolicy.findUnique({ where: { id: 'singleton' } });
++    return row?.content ?? DEFAULT_PRIVACY;
++  } catch {
++    // DB not available (build time on Vercel)
++    return DEFAULT_PRIVACY;
++  }
+ }
+ 
+ export async function setPrivacyPolicy(content: string): Promise<void> {
+-- 
+2.47.3
+
