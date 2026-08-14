@@ -2,36 +2,51 @@
  * File upload helper.
  *
  * Production (Vercel): uses Cloudflare R2 via S3-compatible API.
- *   Required env vars:
+ *   Required env vars for R2:
  *     R2_ACCOUNT_ID
  *     R2_ACCESS_KEY_ID
  *     R2_SECRET_ACCESS_KEY
  *     R2_BUCKET_NAME
- *     R2_PUBLIC_URL  (e.g. https://cdn.satuordasy.com or https://pub-xxx.r2.dev)
  *
- * Fallback (no R2 configured): writes to /tmp/uploads (only writable dir on Vercel
- * serverless). Note: /tmp is NOT persistent — files are lost on cold start.
- * Suitable for local dev only.
+ *   Optional (for direct CDN serving):
+ *     R2_PUBLIC_URL  (e.g. https://cdn.satuordasy.com or https://pub-xxx.r2.dev)
+ *     If set, uploaded file URLs are absolute URLs to R2.dev/custom domain.
+ *     If NOT set, file URLs point to /api/r2/<key> — a Next.js route handler
+ *     that streams objects from R2 via S3 API. This works without enabling
+ *     public access on the bucket, but adds latency (Vercel → R2 → browser).
+ *
+ * Fallback (no R2 configured): writes to /tmp/uploads (Vercel) or
+ * ./public/uploads (local dev). Vercel /tmp is NOT persistent.
  */
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 export type UploadedFile = {
-  url: string; // public URL, e.g. https://cdn.satuordasy.com/uploads/abc-123.jpg
+  url: string; // public URL, e.g. https://cdn.satuordasy.com/uploads/abc-123.jpg or /api/r2/uploads/abc-123.jpg
   filename: string;
   size: number;
 };
 
 const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.svg', '.pdf', '.gif'];
 
+const CONTENT_TYPES: Record<string, string> = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.pdf': 'application/pdf',
+  '.bin': 'application/octet-stream',
+};
+
 function isR2Configured(): boolean {
   return Boolean(
     process.env.R2_ACCOUNT_ID &&
       process.env.R2_ACCESS_KEY_ID &&
       process.env.R2_SECRET_ACCESS_KEY &&
-      process.env.R2_BUCKET_NAME &&
-      process.env.R2_PUBLIC_URL
+      process.env.R2_BUCKET_NAME
   );
 }
 
@@ -56,33 +71,36 @@ function generateKey(name: string): string {
   return `uploads/${id}${sanitizeExtension(name)}`;
 }
 
+/**
+ * Returns the public URL for an R2 object.
+ * - If R2_PUBLIC_URL is set, returns `${R2_PUBLIC_URL}/${key}` (direct CDN access)
+ * - Otherwise returns `/api/r2/${key}` (proxied via Next.js route handler)
+ */
+function buildR2Url(key: string): string {
+  if (process.env.R2_PUBLIC_URL) {
+    const baseUrl = process.env.R2_PUBLIC_URL.replace(/\/+$/, '');
+    return `${baseUrl}/${key}`;
+  }
+  return `/api/r2/${key}`;
+}
+
 async function uploadToR2(file: File, key: string): Promise<string> {
   const buf = Buffer.from(await file.arrayBuffer());
   const ext = path.extname(key);
-  const contentType: Record<string, string> = {
-    '.jpg': 'image/jpeg',
-    '.jpeg': 'image/jpeg',
-    '.png': 'image/png',
-    '.webp': 'image/webp',
-    '.gif': 'image/gif',
-    '.svg': 'image/svg+xml',
-    '.pdf': 'application/pdf',
-    '.bin': 'application/octet-stream',
-  };
 
   await getR2Client().send(
     new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME!,
       Key: key,
       Body: buf,
-      ContentType: contentType[ext] ?? 'application/octet-stream',
+      ContentType: CONTENT_TYPES[ext] ?? 'application/octet-stream',
       CacheControl: 'public, max-age=31536000, immutable',
     })
   );
 
-  // Return public URL
-  const baseUrl = process.env.R2_PUBLIC_URL!.replace(/\/+$/, '');
-  return `${baseUrl}/${key}`;
+  // Return public URL — either direct CDN (if R2_PUBLIC_URL is set)
+  // or proxied via /api/r2/<key> (works without public access on bucket)
+  return buildR2Url(key);
 }
 
 async function uploadToLocal(file: File): Promise<{ url: string; key: string }> {
@@ -123,9 +141,10 @@ export async function saveFile(file: File): Promise<UploadedFile> {
 }
 
 export async function deleteFile(url: string): Promise<void> {
-  // R2 delete
-  if (isR2Configured() && process.env.R2_PUBLIC_URL && url.startsWith(process.env.R2_PUBLIC_URL)) {
-    const key = url.slice(process.env.R2_PUBLIC_URL.length).replace(/^\/+/, '');
+  // R2 delete — direct CDN URL (R2_PUBLIC_URL was set)
+  const r2PublicUrl = process.env.R2_PUBLIC_URL;
+  if (r2PublicUrl && url.startsWith(r2PublicUrl)) {
+    const key = url.slice(r2PublicUrl.length).replace(/^\/+/, '');
     try {
       await getR2Client().send(
         new DeleteObjectCommand({
@@ -135,6 +154,22 @@ export async function deleteFile(url: string): Promise<void> {
       );
     } catch {
       // ignore — file may not exist
+    }
+    return;
+  }
+
+  // R2 delete — proxied URL (/api/r2/uploads/xxx.png)
+  if (url.startsWith('/api/r2/')) {
+    const key = url.slice('/api/r2/'.length);
+    try {
+      await getR2Client().send(
+        new DeleteObjectCommand({
+          Bucket: process.env.R2_BUCKET_NAME!,
+          Key: key,
+        })
+      );
+    } catch {
+      // ignore
     }
     return;
   }
