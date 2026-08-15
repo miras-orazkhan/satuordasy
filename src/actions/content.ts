@@ -12,6 +12,7 @@ import {
   interiorSchema,
   catalogSchema,
   socialLinkSchema,
+  leadFormConfigSchema,
 } from '@/lib/validations';
 import { revalidatePath } from 'next/cache';
 
@@ -186,6 +187,29 @@ export async function updateCatalog(projectId: string, input: unknown): Promise<
   if (!parsed.success) return { ok: false, error: 'Проверьте поля', fieldErrors: parsed.error.flatten().fieldErrors as Record<string, string[]> };
   const data = { ...parsed.data, fileName: parsed.data.fileName || null };
   await db.catalog.upsert({
+    where: { projectId },
+    create: { projectId, ...data },
+    update: data,
+  });
+  revalidatePath('/admin/projects');
+  return { ok: true };
+}
+
+// ---------- LEAD FORM CONFIG (per-project) ----------
+export async function updateLeadFormConfig(projectId: string, input: unknown): Promise<Result> {
+  const parsed = leadFormConfigSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: 'Проверьте поля', fieldErrors: parsed.error.flatten().fieldErrors as Record<string, string[]> };
+
+  const data = {
+    formType: parsed.data.formType,
+    bitrixPortalId: parsed.data.bitrixPortalId || null,
+    bitrixFormId: parsed.data.bitrixFormId || null,
+    bitrixEmbedCode: parsed.data.bitrixEmbedCode || null,
+    sectionTitle: parsed.data.sectionTitle || null,
+    sectionSubtitle: parsed.data.sectionSubtitle || null,
+  };
+
+  await db.leadFormConfig.upsert({
     where: { projectId },
     create: { projectId, ...data },
     update: data,

@@ -128,6 +128,17 @@ export const socialLinkSchema = z.object({
 });
 export type SocialLinkInput = z.infer<typeof socialLinkSchema>;
 
+// ---------- LEAD FORM CONFIG (per-project) ----------
+export const leadFormConfigSchema = z.object({
+  formType: z.enum(['native', 'bitrix24']),
+  bitrixPortalId: z.string().max(50).optional().or(z.literal('')),
+  bitrixFormId: z.string().max(50).optional().or(z.literal('')),
+  bitrixEmbedCode: z.string().max(10000).optional().or(z.literal('')),
+  sectionTitle: z.string().max(200).optional().or(z.literal('')),
+  sectionSubtitle: z.string().max(500).optional().or(z.literal('')),
+});
+export type LeadFormConfigInput = z.infer<typeof leadFormConfigSchema>;
+
 // ---------- SETTINGS ----------
 export const settingsSchema = z.object({
   faviconUrl: z.string().url().optional().or(z.literal('')),

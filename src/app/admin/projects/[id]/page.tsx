@@ -16,6 +16,7 @@ import { FloorPlansEditor } from '@/components/admin/forms/floor-plans-editor';
 import { InteriorsEditor } from '@/components/admin/forms/interiors-editor';
 import { CatalogEditor } from '@/components/admin/forms/catalog-editor';
 import { SocialLinksEditor } from '@/components/admin/forms/social-links-editor';
+import { LeadFormEditor } from '@/components/admin/forms/lead-form-editor';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,6 +68,7 @@ export default async function EditProjectPage({ params }: Params) {
       <FloorPlansEditor categories={project.floorCategories} projectId={project.id} />
       <InteriorsEditor items={project.interiors} projectId={project.id} />
       <CatalogEditor catalog={project.catalog} projectId={project.id} />
+      <LeadFormEditor config={project.leadForm} projectId={project.id} />
       <SocialLinksEditor items={project.socials} projectId={project.id} />
     </div>
   );

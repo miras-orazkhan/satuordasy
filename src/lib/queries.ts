@@ -15,6 +15,7 @@ export async function getPublishedProjectBySlug(slug: string) {
       interiors: { orderBy: { sortOrder: 'asc' } },
       catalog: true,
       socials: { orderBy: { sortOrder: 'asc' } },
+      leadForm: true,
     },
   });
 }
@@ -41,6 +42,7 @@ export async function getProjectForAdmin(id: string) {
       interiors: { orderBy: { sortOrder: 'asc' } },
       catalog: true,
       socials: { orderBy: { sortOrder: 'asc' } },
+      leadForm: true,
     },
   });
 }

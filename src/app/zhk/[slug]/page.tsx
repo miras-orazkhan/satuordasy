@@ -127,7 +127,7 @@ export default async function ProjectPage({ params }: Params) {
 
       <InteriorsSection items={project.interiors} />
 
-      <LeadFormSection projectId={project.id} />
+      <LeadFormSection projectId={project.id} config={project.leadForm} />
 
       <FooterSection socials={socials} brandName={brandName} projectTitle={project.title} />
 

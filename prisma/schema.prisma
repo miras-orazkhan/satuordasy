@@ -55,6 +55,7 @@ model Project {
   catalog         Catalog?
   socials         SocialLink[]
   leads           Lead[]
+  leadForm        LeadFormConfig?
 }
 
 model HeroBlock {
@@ -180,6 +181,26 @@ model Lead {
 
   @@index([projectId])
   @@index([status])
+}
+
+// Per-project lead form configuration.
+// Two modes:
+//   - "native": built-in form (name + phone + comment) → creates a Lead in DB
+//   - "bitrix24": embeds Bitrix24 CRM form widget via <script> tag
+//     Admin enters portal ID (e.g. b35129330) and form ID (e.g. 12), and
+//     the widget is injected on the /zhk/[slug]#leads-form page.
+model LeadFormConfig {
+  id                  String   @id @default(cuid())
+  projectId           String   @unique
+  project             Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  formType            String   @default("native") // "native" | "bitrix24"
+  // Bitrix24 config (only used when formType = "bitrix24")
+  bitrixPortalId      String?  // e.g. "b35129330" — appears in cdn-ru.bitrix24.kz/b35129330/crm/form/loader_XX.js
+  bitrixFormId        String?  // e.g. "12" — loader_12.js + data-b24-form="inline/12/..."
+  bitrixEmbedCode     String?  // optional: full <script>...</script> from Bitrix24 UI (overrides portal/form IDs)
+  sectionTitle        String?  // optional heading above the form (defaults to "Оставьте заявку на просмотр")
+  sectionSubtitle     String?  // optional subtitle text
+  updatedAt           DateTime @updatedAt
 }
 
 model Setting {
