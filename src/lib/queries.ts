@@ -1,7 +1,21 @@
 import { db } from '@/lib/db';
 
+/**
+ * Strip Date objects from a Prisma result so it can be passed from a Server
+ * Component to a Client Component ('use client') without RSC serialization
+ * errors. RSC cannot serialize Date objects — it throws:
+ *   "TypeError: Date object cannot be serialized as JSON"
+ * in production builds (dev mode is more lenient).
+ *
+ * We use JSON.parse(JSON.stringify(...)) — fastest way to deep-clone and
+ * convert all Date objects to ISO strings.
+ */
+function toSerializable<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj));
+}
+
 export async function getPublishedProjectBySlug(slug: string) {
-  return db.project.findFirst({
+  const project = await db.project.findFirst({
     where: { slug, status: 'published' },
     include: {
       hero: true,
@@ -18,17 +32,20 @@ export async function getPublishedProjectBySlug(slug: string) {
       leadForm: true,
     },
   });
+  // Strip Date objects so the result can be passed to 'use client' components
+  return project ? toSerializable(project) : null;
 }
 
 export async function getGlobalSocials() {
-  return db.socialLink.findMany({
+  const socials = await db.socialLink.findMany({
     where: { projectId: null },
     orderBy: { sortOrder: 'asc' },
   });
+  return toSerializable(socials);
 }
 
 export async function getProjectForAdmin(id: string) {
-  return db.project.findUnique({
+  const project = await db.project.findUnique({
     where: { id },
     include: {
       hero: true,
@@ -45,10 +62,11 @@ export async function getProjectForAdmin(id: string) {
       leadForm: true,
     },
   });
+  return project ? toSerializable(project) : null;
 }
 
 export async function getAllProjectsForAdmin() {
-  return db.project.findMany({
+  const projects = await db.project.findMany({
     select: {
       id: true,
       slug: true,
@@ -62,13 +80,15 @@ export async function getAllProjectsForAdmin() {
     },
     orderBy: { updatedAt: 'desc' },
   });
+  return toSerializable(projects);
 }
 
 export async function getAllLeads() {
-  return db.lead.findMany({
+  const leads = await db.lead.findMany({
     include: {
       project: { select: { title: true, slug: true } },
     },
     orderBy: { createdAt: 'desc' },
   });
+  return toSerializable(leads);
 }
