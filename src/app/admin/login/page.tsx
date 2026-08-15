@@ -58,7 +58,7 @@ export default function AdminLoginPage() {
             Вход в админ-панель
           </CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
-            Используйте учётные данные Vela Estates
+            Используйте учётные данные Satu Ordasy
           </p>
         </CardHeader>
         <CardContent>

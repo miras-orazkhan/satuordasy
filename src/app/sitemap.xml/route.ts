@@ -8,7 +8,7 @@ export async function GET() {
     select: { slug: true, updatedAt: true },
   });
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://vela-estates.example';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://satuordasy.com';
 
   const urls = [
     { loc: `${baseUrl}/`, lastmod: new Date().toISOString(), priority: '1.0', changefreq: 'weekly' },

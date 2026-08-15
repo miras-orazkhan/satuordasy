@@ -32,7 +32,7 @@ export function SettingsForm({ initial }: Props) {
         robotsCustomRules: String(fd.get('robotsCustomRules') || ''),
         geoDefaultRegion: String(fd.get('geoDefaultRegion') || ''),
         geoDefaultCity: String(fd.get('geoDefaultCity') || ''),
-        brandName: String(fd.get('brandName') || 'Vela Estates'),
+        brandName: String(fd.get('brandName') || 'Satu Ordasy'),
       });
       if (res.ok) toast.success('Настройки сохранены');
       else {
@@ -55,7 +55,7 @@ export function SettingsForm({ initial }: Props) {
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <Label htmlFor="brandName">Название бренда</Label>
-            <Input id="brandName" name="brandName" defaultValue={initial.brandName ?? 'Vela Estates'} className="mt-1.5" />
+            <Input id="brandName" name="brandName" defaultValue={initial.brandName ?? 'Satu Ordasy'} className="mt-1.5" />
             <p className="text-xs text-muted-foreground mt-1">Показывается в шапке и подвале сайта</p>
           </div>
 

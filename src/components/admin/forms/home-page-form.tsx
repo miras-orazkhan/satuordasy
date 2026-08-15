@@ -53,7 +53,7 @@ export function HomePageForm({ initial }: { initial: HomeData }) {
               required
               defaultValue={initial.title}
               className="mt-1.5"
-              placeholder="Vela Estates"
+              placeholder="Satu Ordasy"
             />
           </div>
           <div>

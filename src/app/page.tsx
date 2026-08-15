@@ -66,7 +66,7 @@ export default async function Home() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         <div className="container-premium relative h-full flex flex-col justify-end pb-16 md:pb-24">
           <p className="text-white/80 text-sm md:text-base mb-3 tracking-wider uppercase">
-            Премиальные жилые комплексы
+            Выберите свой идеальный дом
           </p>
           <h1 className="text-white text-4xl md:text-7xl lg:text-8xl font-bold tracking-tight text-balance max-w-5xl">
             {siteName}
@@ -129,7 +129,7 @@ async function Footer({ brandName }: { brandName: string }) {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <p className="text-xl font-semibold tracking-tight">{brandName}</p>
-            <p className="text-sm text-muted-foreground mt-1">Премиальные жилые комплексы</p>
+            <p className="text-sm text-muted-foreground mt-1">Выберите свой идеальный дом</p>
           </div>
           <div className="flex items-center gap-6">
             {socials.map((s) => (

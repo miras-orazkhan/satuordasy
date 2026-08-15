@@ -6,7 +6,7 @@ export default function NotFound() {
     <main className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="container-premium h-16 md:h-20 flex items-center">
         <Link href="/" className="text-lg md:text-xl font-semibold tracking-tight">
-          Vela Estates
+          Satu Ordasy
         </Link>
       </header>
       <div className="flex-1 container-premium flex flex-col items-center justify-center text-center">

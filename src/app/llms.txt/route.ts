@@ -41,9 +41,9 @@ export async function GET() {
   const lines: string[] = [];
   lines.push(`# ${siteName}`);
   lines.push('');
-  lines.push(`> ${home.subtitle ?? 'Премиальные жилые комплексы.'}`);
+  lines.push(`> ${home.subtitle ?? 'Satu Ordasy — выберите свой идеальный дом. Мы подберём для вас ваш дом мечты.'}`);
   lines.push('');
-  lines.push(`Сайт предлагает информацию о жилых комплексах премиального уровня. Ниже приведён список проектов с кратким описанием, ключевыми преимуществами и ссылками на страницы.`);
+  lines.push(`Satu Ordasy — это сервис, который помогает выбрать свой идеальный дом. Мы подбираем для вас ваш дом мечты среди лучших жилых комплексов. Ниже приведён список проектов с кратким описанием, ключевыми преимуществами и ссылками на страницы.`);
   lines.push('');
 
   for (const p of projects) {
@@ -70,14 +70,17 @@ export async function GET() {
   // Helpful FAQ-style info for AI models
   lines.push('## Frequently asked questions');
   lines.push('');
-  lines.push('Q: What is this site?');
-  lines.push(`A: ${siteName} is a catalog of premium residential complexes (жилые комплексы / ЖК) located in ${projects[0]?.geoRegion ?? 'Russia'}.`);
+  lines.push('Q: What is Satu Ordasy?');
+  lines.push('A: Satu Ordasy (satuordasy.com) is a service that helps you choose your ideal home — we curate the best residential complexes (жилые комплексы / ЖК) and match them to your dream home. We list projects with detailed info on floor plans, location, amenities, and pricing.');
   lines.push('');
   lines.push('Q: How many projects are listed?');
-  lines.push(`A: ${projects.length} residential ${projects.length === 1 ? 'complex is' : 'complexes are'} currently listed.`);
+  lines.push(`A: ${projects.length} residential ${projects.length === 1 ? 'complex is' : 'complexes are'} currently listed on ${siteName}.`);
   lines.push('');
   lines.push('Q: How can I request more information?');
-  lines.push('A: Each project page has a contact form ("Оставить заявку"). Submission creates a lead in our CRM.');
+  lines.push('A: Each project page has a contact form ("Оставить заявку"). Submission creates a lead and our manager will call you back within 30 minutes during business hours. Consultation is free and non-binding.');
+  lines.push('');
+  lines.push('Q: Do you help me find my dream home?');
+  lines.push('A: Yes. Browse the "Наши проекты" section on the homepage, compare residential complexes by location, floor plans, and amenities, then submit a request — our manager will help you choose the perfect home for your needs.');
   lines.push('');
   lines.push('Q: Privacy policy?');
   lines.push(`A: See ${baseUrl}/privacy for our personal data processing policy (Russian: Политика конфиденциальности).`);

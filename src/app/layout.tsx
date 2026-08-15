@@ -30,17 +30,35 @@ const plusJakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Vela Estates — премиальные жилые комплексы',
-    template: '%s — Vela Estates',
+    default: 'Satu Ordasy — выберите свой идеальный дом',
+    template: '%s — Satu Ordasy',
   },
   description:
-    'Конструктор сайтов для жилых комплексов премиального уровня. Архитектура, планировки, инфраструктура.',
-  keywords: ['ЖК', 'новостройки', 'премиум', 'Москва', 'квартиры'],
-  authors: [{ name: 'Vela Estates' }],
+    'Satu Ordasy поможет вам выбрать идеальный дом мечты. Подберём для вас квартиру в лучших жилых комплексах — планировки, расположение, инфраструктура и актуальные цены.',
+  keywords: [
+    'satu ordasy',
+    'выбрать квартиру',
+    'дом мечты',
+    'жилые комплексы',
+    'новостройки',
+    'купить квартиру',
+    'подбор квартиры',
+    'планировки квартир',
+  ],
+  authors: [{ name: 'Satu Ordasy' }],
   openGraph: {
-    title: 'Vela Estates',
-    description: 'Премиальные жилые комплексы',
+    title: 'Satu Ordasy — выберите свой идеальный дом',
+    description:
+      'Подберём для вас ваш дом мечты. Лучшие жилые комплексы, планировки, расположение и инфраструктура — всё для правильного выбора.',
     type: 'website',
+    locale: 'ru_RU',
+    siteName: 'Satu Ordasy',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Satu Ordasy — выберите свой идеальный дом',
+    description:
+      'Подберём для вас ваш дом мечты. Лучшие жилые комплексы, планировки, расположение и инфраструктура.',
   },
 };
 

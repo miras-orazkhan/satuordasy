@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const allowAll = (await getSetting('robotsAllowAll')) === 'true';
   const customRules = await getSetting('robotsCustomRules');
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://vela-estates.example';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://satuordasy.com';
 
   const lines: string[] = [
     'User-agent: *',

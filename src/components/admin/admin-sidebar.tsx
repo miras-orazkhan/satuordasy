@@ -54,7 +54,7 @@ export function AdminSidebar({
       <div className="h-16 flex items-center px-6 border-b border-border">
         <Link href="/" className="flex items-center gap-2 font-semibold text-lg tracking-tight">
           <Shield className="h-5 w-5 text-accent" />
-          Vela Admin
+          Satu Admin
         </Link>
       </div>
       <nav className="flex-1 p-4 space-y-1">

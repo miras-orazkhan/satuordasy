@@ -8,7 +8,7 @@ export function AdminTopbar({ user }: { user: { email: string; name: string; rol
     <header className="md:hidden sticky top-0 z-40 glass border-b border-border">
       <div className="flex h-14 items-center justify-between px-4">
         <Link href="/admin" className="font-semibold">
-          Vela Admin
+          Satu Admin
         </Link>
         <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground hidden sm:inline">{user.email}</span>

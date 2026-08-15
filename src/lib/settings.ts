@@ -13,7 +13,7 @@ const DEFAULTS: Record<string, string> = {
   robotsCustomRules: '',
   geoDefaultRegion: 'Россия',
   geoDefaultCity: 'Москва',
-  brandName: 'Наши проекты',
+  brandName: 'Satu Ordasy',
 };
 
 export async function getSettings(): Promise<Record<string, string>> {
@@ -74,8 +74,8 @@ export async function setPrivacyPolicy(content: string): Promise<void> {
 
 // ---------- HOME PAGE (editable) ----------
 const DEFAULT_HOME: { title: string; subtitle: string | null; heroImage: string | null; logoUrl: string | null } = {
-  title: 'Vela Estates',
-  subtitle: 'Архитектура, которая остаётся в памяти. Выберите проект, чтобы узнать детали.',
+  title: 'Satu Ordasy',
+  subtitle: 'Выберите свой идеальный дом. Мы подберём для вас ваш дом мечты — лучшие жилые комплексы, планировки, расположение и инфраструктура.',
   heroImage: null,
   logoUrl: null,
 };
