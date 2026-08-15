@@ -58,6 +58,7 @@ export const advantageSchema = z.object({
   title: z.string().min(2).max(200),
   description: z.string().min(2).max(500),
   icon: z.string().max(200).optional().or(z.literal('')),
+  customIconSvg: z.string().max(50000).optional().or(z.literal('')),
   sortOrder: z.number().int().default(0),
 });
 export type AdvantageInput = z.infer<typeof advantageSchema>;

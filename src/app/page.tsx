@@ -1,8 +1,7 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
-import { getSetting } from '@/lib/settings';
+import { getSetting, getHomePage } from '@/lib/settings';
 import { ProjectsTabs } from '@/components/public/projects-tabs';
-import { ArrowUpRight } from 'lucide-react';
 import { getThemePreset } from '@/lib/theme-presets';
 
 // Render at request time (no DB at build time on Vercel)
@@ -10,58 +9,73 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function Home() {
-  const projects = await db.project.findMany({
-    where: { status: 'published' },
-    select: {
-      id: true,
-      slug: true,
-      title: true,
-      themePreset: true,
-      fontPreset: true,
-      seoTitle: true,
-      seoDescription: true,
-      hero: { select: { desktopImage: true, mobileImage: true, subtitle: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
-  const brandName = await getSetting('brandName');
+  const [projects, brandName, home] = await Promise.all([
+    db.project.findMany({
+      where: { status: 'published' },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        themePreset: true,
+        fontPreset: true,
+        seoTitle: true,
+        seoDescription: true,
+        hero: { select: { desktopImage: true, mobileImage: true, subtitle: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    }),
+    getSetting('brandName'),
+    getHomePage(),
+  ]);
 
-  const hero = projects[0];
+  // HomePage settings override brandName if set
+  const siteName = home.title || brandName;
 
   return (
     <main className="min-h-screen bg-background text-foreground">
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-border/40">
         <div className="container-premium flex h-16 md:h-20 items-center justify-between">
-          <Link href="/" className="text-lg md:text-xl font-semibold tracking-tight">
-            {brandName}
+          <Link href="/" className="flex items-center gap-3 text-lg md:text-xl font-semibold tracking-tight">
+            {home.logoUrl ? (
+               
+              <img
+                src={home.logoUrl}
+                alt={siteName}
+                className="h-8 md:h-10 w-auto"
+              />
+            ) : null}
+            {siteName}
           </Link>
         </div>
       </header>
 
-      {/* Hero */}
+      {/* Hero — clean, no decorative stripes */}
       <section className="relative h-[70vh] min-h-[480px] w-full overflow-hidden">
-        {hero?.hero?.desktopImage ? (
+        {home.heroImage ? (
            
           <img
-            src={hero.hero.desktopImage}
-            alt={hero.title}
+            src={home.heroImage}
+            alt={siteName}
             className="absolute inset-0 h-full w-full object-cover"
           />
         ) : (
           <div className="absolute inset-0 bg-muted" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        {/* Minimal darkening at the bottom for text readability — no stripes */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         <div className="container-premium relative h-full flex flex-col justify-end pb-16 md:pb-24">
           <p className="text-white/80 text-sm md:text-base mb-3 tracking-wider uppercase">
             Премиальные жилые комплексы
           </p>
           <h1 className="text-white text-4xl md:text-7xl lg:text-8xl font-bold tracking-tight text-balance max-w-5xl">
-            {brandName}
+            {siteName}
           </h1>
-          <p className="text-white/90 text-base md:text-xl mt-4 md:mt-6 max-w-2xl text-balance">
-            Архитектура, которая остаётся в памяти. Выберите проект, чтобы узнать детали.
-          </p>
+          {home.subtitle && (
+            <p className="text-white/90 text-base md:text-xl mt-4 md:mt-6 max-w-2xl text-balance">
+              {home.subtitle}
+            </p>
+          )}
         </div>
       </section>
 
@@ -99,17 +113,16 @@ export default async function Home() {
       </section>
 
       {/* Footer */}
-      <Footer />
+      <Footer brandName={siteName} />
     </main>
   );
 }
 
-async function Footer() {
+async function Footer({ brandName }: { brandName: string }) {
   const socials = await db.socialLink.findMany({
     where: { projectId: null },
     orderBy: { sortOrder: 'asc' },
   });
-  const brandName = await getSetting('brandName');
   return (
     <footer className="border-t border-border mt-auto">
       <div className="container-premium py-10 md:py-16">

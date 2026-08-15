@@ -13,6 +13,7 @@ export async function GET() {
   const urls = [
     { loc: `${baseUrl}/`, lastmod: new Date().toISOString(), priority: '1.0', changefreq: 'weekly' },
     { loc: `${baseUrl}/privacy`, lastmod: new Date().toISOString(), priority: '0.3', changefreq: 'yearly' },
+    { loc: `${baseUrl}/llms.txt`, lastmod: new Date().toISOString(), priority: '0.8', changefreq: 'weekly' },
     ...projects.map((p) => ({
       loc: `${baseUrl}/zhk/${p.slug}`,
       lastmod: p.updatedAt.toISOString(),

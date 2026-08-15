@@ -72,6 +72,71 @@ export async function setPrivacyPolicy(content: string): Promise<void> {
   });
 }
 
+// ---------- HOME PAGE (editable) ----------
+const DEFAULT_HOME: { title: string; subtitle: string | null; heroImage: string | null; logoUrl: string | null } = {
+  title: 'Vela Estates',
+  subtitle: 'Архитектура, которая остаётся в памяти. Выберите проект, чтобы узнать детали.',
+  heroImage: null,
+  logoUrl: null,
+};
+
+export async function getHomePage() {
+  try {
+    const row = await db.homePage.findUnique({ where: { id: 'singleton' } });
+    if (!row) return DEFAULT_HOME;
+    return {
+      title: row.title,
+      subtitle: row.subtitle,
+      heroImage: row.heroImage,
+      logoUrl: row.logoUrl,
+    };
+  } catch {
+    // DB not available (build time)
+    return DEFAULT_HOME;
+  }
+}
+
+export async function setHomePage(data: {
+  title: string;
+  subtitle?: string | null;
+  heroImage?: string | null;
+  logoUrl?: string | null;
+}): Promise<void> {
+  await db.homePage.upsert({
+    where: { id: 'singleton' },
+    create: {
+      id: 'singleton',
+      title: data.title,
+      subtitle: data.subtitle ?? null,
+      heroImage: data.heroImage ?? null,
+      logoUrl: data.logoUrl ?? null,
+    },
+    update: {
+      title: data.title,
+      subtitle: data.subtitle ?? null,
+      heroImage: data.heroImage ?? null,
+      logoUrl: data.logoUrl ?? null,
+    },
+  });
+}
+
+// ---------- CUSTOM SVG ICONS ----------
+export async function listCustomIcons() {
+  try {
+    return await db.advantageIcon.findMany({ orderBy: { name: 'asc' } });
+  } catch {
+    return [];
+  }
+}
+
+export async function addCustomIcon(name: string, svgMarkup: string) {
+  await db.advantageIcon.create({ data: { name, svgMarkup } });
+}
+
+export async function deleteCustomIcon(id: string) {
+  await db.advantageIcon.delete({ where: { id } });
+}
+
 const DEFAULT_PRIVACY = `# Политика конфиденциальности
 
 Настоящая Политика конфиденциальности определяет порядок обработки и защиты персональных данных пользователей сайта.

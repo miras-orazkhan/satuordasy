@@ -8,7 +8,6 @@ import {
   GraduationCap,
   Waves,
   Car,
-  Image as ImageIcon,
 } from 'lucide-react';
 
 type Advantage = {
@@ -16,6 +15,7 @@ type Advantage = {
   title: string;
   description: string;
   icon: string | null;
+  customIconSvg: string | null;
 };
 
 export function AdvantagesSection({ items }: { items: Advantage[] }) {
@@ -52,7 +52,7 @@ function AdvantageCard({ item }: { item: Advantage }) {
   return (
     <div className="bg-background p-8 md:p-12 h-full flex flex-col">
       <div className="inline-flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-accent/10 text-accent">
-        <AdvantageIcon name={item.icon} />
+        <AdvantageIcon name={item.icon} customIconSvg={item.customIconSvg} />
       </div>
       <h3 className="mt-6 md:mt-8 text-xl md:text-2xl font-semibold tracking-tight">
         {item.title}
@@ -67,10 +67,27 @@ function AdvantageCard({ item }: { item: Advantage }) {
 const ICON_CLASS = 'h-6 w-6 md:h-7 md:w-7';
 
 /**
- * Render the correct Lucide icon based on the curated name whitelist.
- * Uses switch-based JSX return to satisfy React Compiler's static-components rule.
+ * Render the icon — either:
+ *  - A curated Lucide icon (switch-based, for React Compiler compliance)
+ *  - A custom SVG markup provided by the admin (rendered via dangerouslySetInnerHTML)
  */
-function AdvantageIcon({ name }: { name: string | null }) {
+function AdvantageIcon({
+  name,
+  customIconSvg,
+}: {
+  name: string | null;
+  customIconSvg: string | null;
+}) {
+  // Custom SVG takes priority over Lucide name
+  if (customIconSvg && customIconSvg.includes('<svg')) {
+    return (
+      <div
+        className="h-6 w-6 md:h-7 md:w-7 flex items-center justify-center [&_svg]:w-full [&_svg]:h-full"
+        dangerouslySetInnerHTML={{ __html: customIconSvg }}
+      />
+    );
+  }
+
   switch (name) {
     case 'Mountain':
       return <Mountain className={ICON_CLASS} strokeWidth={1.5} />;
@@ -89,7 +106,6 @@ function AdvantageIcon({ name }: { name: string | null }) {
     case 'Car':
       return <Car className={ICON_CLASS} strokeWidth={1.5} />;
     default:
-      if (name && name.startsWith('custom:')) return <ImageIcon className={ICON_CLASS} strokeWidth={1.5} />;
       return <Sparkles className={ICON_CLASS} strokeWidth={1.5} />;
   }
 }

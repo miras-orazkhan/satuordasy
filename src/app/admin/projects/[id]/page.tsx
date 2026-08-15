@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import { requireAdmin } from '@/lib/session';
 import { getProjectForAdmin } from '@/lib/queries';
+import { listCustomIcons } from '@/lib/settings';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +24,10 @@ type Params = { params: Promise<{ id: string }> };
 export default async function EditProjectPage({ params }: Params) {
   await requireAdmin();
   const { id } = await params;
-  const project = await getProjectForAdmin(id);
+  const [project, customIcons] = await Promise.all([
+    getProjectForAdmin(id),
+    listCustomIcons(),
+  ]);
   if (!project) notFound();
 
   return (
@@ -57,7 +61,7 @@ export default async function EditProjectPage({ params }: Params) {
 
       <ProjectSettingsForm project={project} />
       <HeroEditor hero={project.hero} projectId={project.id} />
-      <AdvantagesEditor items={project.advantages} projectId={project.id} />
+      <AdvantagesEditor items={project.advantages} projectId={project.id} customIcons={customIcons} />
       <AboutEditor about={project.about} projectId={project.id} />
       <GalleryEditor items={project.gallery} projectId={project.id} />
       <FloorPlansEditor categories={project.floorCategories} projectId={project.id} />

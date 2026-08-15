@@ -33,6 +33,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       ogImageUrl: true,
       geoRegion: true,
       geoCity: true,
+      geoLat: true,
+      geoLng: true,
     },
   });
   if (!project) return {};
@@ -50,6 +52,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       description,
       images: project.ogImageUrl ? [{ url: project.ogImageUrl }] : undefined,
       type: 'website',
+      locale: 'ru_RU',
     },
     twitter: {
       card: 'summary_large_image',
@@ -57,9 +60,18 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       description,
       images: project.ogImageUrl ? [project.ogImageUrl] : undefined,
     },
+    alternates: {
+      canonical: `/zhk/${slug}`,
+    },
     other: {
-      'geo.region': project.geoRegion ?? '',
+      // GEO (Generative Engine Optimization) — meta tags for AI crawlers
+      'geo.region': project.geoRegion ? `RU-${project.geoRegion}` : '',
       'geo.placename': project.geoCity ?? '',
+      'geo.position': project.geoLat && project.geoLng ? `${project.geoLat};${project.geoLng}` : '',
+      'ICBM': project.geoLat && project.geoLng ? `${project.geoLat}, ${project.geoLng}` : '',
+      // Hint for AI crawlers that this is a real-estate listing
+      'article:tag': ['жилой комплекс', 'недвижимость', project.geoCity, project.title].filter(Boolean).join(', '),
+      'robots': 'index, follow, max-image-preview:large, max-snippet:-1',
     },
   };
 }
@@ -130,26 +142,89 @@ export default async function ProjectPage({ params }: Params) {
 }
 
 function buildSchema(project: any) {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? '';
+
+  // FAQ entries derived from advantages (each advantage becomes a Q&A)
+  const faqEntries = (project.advantages ?? []).map((a: any) => ({
+    '@type': 'Question',
+    name: `Что особенного в «${a.title}»?`,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: a.description,
+    },
+  }));
+
   return {
     '@context': 'https://schema.org',
-    '@type': ['RealEstateListing', 'LocalBusiness'],
-    name: project.title,
-    description: project.seoDescription,
-    url: `/zhk/${project.slug}`,
-    image: project.ogImageUrl,
-    address: {
-      '@type': 'PostalAddress',
-      addressLocality: project.geoCity,
-      addressRegion: project.geoRegion,
-    },
-    geo:
-      project.geoLat && project.geoLng
-        ? {
-            '@type': 'GeoCoordinates',
-            latitude: project.geoLat,
-            longitude: project.geoLng,
-          }
-        : undefined,
+    '@graph': [
+      // 1. RealEstateListing — primary entity
+      {
+        '@type': ['RealEstateListing', 'LocalBusiness', 'Place'],
+        '@id': `${baseUrl}/zhk/${project.slug}#listing`,
+        name: project.title,
+        description: project.seoDescription ?? project.about?.description,
+        url: `${baseUrl}/zhk/${project.slug}`,
+        image: project.ogImageUrl,
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: project.geoCity,
+          addressRegion: project.geoRegion,
+          addressCountry: 'RU',
+        },
+        geo:
+          project.geoLat && project.geoLng
+            ? {
+                '@type': 'GeoCoordinates',
+                latitude: project.geoLat,
+                longitude: project.geoLng,
+              }
+            : undefined,
+        // Amenities = advantages, structured for AI engines
+        amenityFeature: (project.advantages ?? []).map((a: any) => ({
+          '@type': 'LocationFeatureSpecification',
+          name: a.title,
+          value: true,
+          description: a.description,
+        })),
+        // Floor plans
+        floorSize: (project.floorCategories ?? []).flatMap((c: any) =>
+          (c.units ?? []).map((u: any) => ({
+            '@type': 'QuantitativeValue',
+            name: u.name ?? c.name,
+            value: u.area,
+            unitText: 'm²',
+          }))
+        ),
+      },
+      // 2. FAQPage — for AI Overview / Perplexity / ChatGPT to surface answers
+      ...(faqEntries.length > 0
+        ? [
+            {
+              '@type': 'FAQPage',
+              '@id': `${baseUrl}/zhk/${project.slug}#faq`,
+              mainEntity: faqEntries,
+            },
+          ]
+        : []),
+      // 3. BreadcrumbList — for AI engines to understand site structure
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Главная',
+            item: baseUrl,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: project.title,
+            item: `${baseUrl}/zhk/${project.slug}`,
+          },
+        ],
+      },
+    ],
   };
 }
 

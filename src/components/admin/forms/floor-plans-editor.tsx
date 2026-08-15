@@ -14,6 +14,7 @@ import {
 } from '@/actions/content';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { MediaUploader } from '@/components/admin/media-uploader';
 
 type FloorUnit = { id: string; name: string | null; area: number; imageUrl: string | null };
 type FloorCategory = { id: string; name: string; units: FloorUnit[] };
@@ -29,6 +30,8 @@ export function FloorPlansEditor({
   const [pending, startTransition] = useTransition();
   const [newCat, setNewCat] = useState('');
   const [expandedCat, setExpandedCat] = useState<string | null>(categories[0]?.id ?? null);
+  // imageUrl state per category (for the add-unit form)
+  const [unitImages, setUnitImages] = useState<Record<string, string>>({});
 
   function onAddCat(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -57,16 +60,18 @@ export function FloorPlansEditor({
   function onAddUnit(catId: string, e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const imageUrl = unitImages[catId] ?? '';
     startTransition(async () => {
       const res = await addFloorPlanUnit(catId, {
         name: String(fd.get('name') || ''),
         area: String(fd.get('area') || '0'),
-        imageUrl: String(fd.get('imageUrl') || ''),
+        imageUrl,
         sortOrder: 0,
       });
       if (res.ok) {
         toast.success('Планировка добавлена');
         (e.target as HTMLFormElement).reset();
+        setUnitImages((prev) => ({ ...prev, [catId]: '' }));
         router.refresh();
       } else toast.error(res.error);
     });
@@ -141,23 +146,32 @@ export function FloorPlansEditor({
                         ))}
                       </ul>
                     )}
-                    <form onSubmit={(e) => onAddUnit(c.id, e)} className="grid grid-cols-1 sm:grid-cols-4 gap-2 items-end pt-2 border-t border-border">
-                      <div className="sm:col-span-2">
-                        <Label className="text-xs">Название</Label>
-                        <Input name="name" placeholder="1-комнатная" className="mt-1" />
+                    <form onSubmit={(e) => onAddUnit(c.id, e)} className="space-y-3 pt-2 border-t border-border">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
+                        <div className="sm:col-span-2">
+                          <Label className="text-xs">Название</Label>
+                          <Input name="name" placeholder="1-комнатная" className="mt-1" />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Площадь (м²)</Label>
+                          <Input name="area" type="number" step="0.1" placeholder="64.5" className="mt-1" />
+                        </div>
                       </div>
                       <div>
-                        <Label className="text-xs">Площадь (м²)</Label>
-                        <Input name="area" type="number" step="0.1" placeholder="64.5" className="mt-1" />
+                        <Label className="text-xs">Изображение планировки (необязательно)</Label>
+                        <div className="mt-1.5">
+                          <MediaUploader
+                            value={unitImages[c.id] ?? ''}
+                            onChange={(url) => setUnitImages((prev) => ({ ...prev, [c.id]: url }))}
+                            accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                            label="Загрузить изображение планировки"
+                          />
+                        </div>
                       </div>
                       <Button type="submit" size="sm" disabled={pending}>
                         {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
-                        Добавить
+                        Добавить планировку
                       </Button>
-                      <div className="sm:col-span-4">
-                        <Label className="text-xs">URL изображения планировки (необязательно)</Label>
-                        <Input name="imageUrl" className="mt-1 font-mono text-xs" />
-                      </div>
                     </form>
                   </div>
                 )}
@@ -179,7 +193,7 @@ export function FloorPlansEditor({
           </div>
           <Button type="submit" size="sm" disabled={pending}>
             {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
-            Добавить
+            Добавить категорию
           </Button>
         </form>
       </CardContent>

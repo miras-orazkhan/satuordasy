@@ -44,15 +44,16 @@ export function HeroSection({ title, subtitle, ctaText, desktopImage, mobileImag
       aria-label="Главный экран"
     >
       <div className="absolute inset-0 overflow-hidden">
+        { }
         <img
           src={desktopImage || mobileImage || ''}
           alt={title}
           className="absolute inset-0 h-full w-full object-cover will-change-transform"
           style={{ transform: `translate3d(0, ${translateY}px, 0) scale(${scale})` }}
-          priority
         />
       </div>
-      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60" />
+      {/* Single subtle bottom gradient for text readability — no decorative stripes */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
       <div className="container-premium relative h-full flex flex-col justify-end pb-16 md:pb-28">
         <HeroFade>

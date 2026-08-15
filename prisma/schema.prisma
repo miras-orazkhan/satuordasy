@@ -74,7 +74,8 @@ model Advantage {
   project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   title       String
   description String
-  icon        String? // lucide icon name or "custom:<svg-url>"
+  icon        String? // lucide icon name from curated list, OR "custom" to use customIconSvg
+  customIconSvg String? // raw SVG markup when icon="custom"
   sortOrder   Int     @default(0)
 
   @@index([projectId])
@@ -191,4 +192,24 @@ model PrivacyPolicy {
   id        String   @id @default("singleton")
   content   String
   updatedAt DateTime @updatedAt
+}
+
+// ---------- HOME PAGE (editable) ----------
+model HomePage {
+  id            String   @id @default("singleton")
+  title         String
+  subtitle      String?
+  heroImage     String?
+  logoUrl       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ---------- ADVANTAGE ICONS (curated + custom SVG) ----------
+// Stored as raw SVG markup (string). Rendered via dangerouslySetInnerHTML.
+model AdvantageIcon {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  svgMarkup String   // raw <svg>...</svg>
+  createdAt DateTime @default(now())
 }

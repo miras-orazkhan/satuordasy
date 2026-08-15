@@ -64,7 +64,16 @@ export async function addAdvantage(projectId: string, input: unknown): Promise<R
   const parsed = advantageSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: 'Проверьте поля', fieldErrors: parsed.error.flatten().fieldErrors as Record<string, string[]> };
   const count = await db.advantage.count({ where: { projectId } });
-  await db.advantage.create({ data: { ...parsed.data, icon: parsed.data.icon || null, projectId, sortOrder: parsed.data.sortOrder ?? count } });
+  await db.advantage.create({
+    data: {
+      title: parsed.data.title,
+      description: parsed.data.description,
+      icon: parsed.data.icon || null,
+      customIconSvg: parsed.data.customIconSvg || null,
+      projectId,
+      sortOrder: parsed.data.sortOrder ?? count,
+    },
+  });
   revalidatePath('/admin/projects');
   return { ok: true };
 }
@@ -72,7 +81,15 @@ export async function addAdvantage(projectId: string, input: unknown): Promise<R
 export async function updateAdvantage(id: string, input: unknown): Promise<Result> {
   const parsed = advantageSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: 'Проверьте поля', fieldErrors: parsed.error.flatten().fieldErrors as Record<string, string[]> };
-  await db.advantage.update({ where: { id }, data: { ...parsed.data, icon: parsed.data.icon || null } });
+  await db.advantage.update({
+    where: { id },
+    data: {
+      title: parsed.data.title,
+      description: parsed.data.description,
+      icon: parsed.data.icon || null,
+      customIconSvg: parsed.data.customIconSvg || null,
+    },
+  });
   revalidatePath('/admin/projects');
   return { ok: true };
 }
