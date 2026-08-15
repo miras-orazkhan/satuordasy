@@ -48,6 +48,10 @@ export function AdvantagesEditor({
   // 'library'  = pick from saved custom icons
   const [iconMode, setIconMode] = useState<'curated' | 'custom' | 'library'>('curated');
   const [customSvg, setCustomSvg] = useState('');
+  // Controlled toggle for the "add advantage" form.
+  // We don't use native <details> because when closed, the form inside has
+  // display:none and browser cannot focus required inputs for validation.
+  const [showAddForm, setShowAddForm] = useState(false);
 
   function onAdd(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -141,11 +145,16 @@ export function AdvantagesEditor({
           </ul>
         )}
 
-        <details className="border-t border-border pt-4">
-          <summary className="cursor-pointer text-sm font-medium hover:text-accent">
-            + Добавить преимущество
-          </summary>
-          <form onSubmit={onAdd} className="mt-3 space-y-3">
+        <div className="border-t border-border pt-4">
+          <button
+            type="button"
+            onClick={() => setShowAddForm((v) => !v)}
+            className="text-sm font-medium hover:text-accent"
+          >
+            {showAddForm ? '− Скрыть форму' : '+ Добавить преимущество'}
+          </button>
+          {showAddForm && (
+            <form onSubmit={onAdd} className="mt-3 space-y-3">
             <div>
               <Label htmlFor="adv-title">Заголовок</Label>
               <Input id="adv-title" name="title" required className="mt-1.5" />
@@ -255,7 +264,8 @@ export function AdvantagesEditor({
               Добавить
             </Button>
           </form>
-        </details>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

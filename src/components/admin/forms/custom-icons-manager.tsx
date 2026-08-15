@@ -10,6 +10,7 @@ import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { createCustomIcon, deleteCustomIcon } from '@/actions/admin';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { CollapsibleForm } from '@/components/admin/collapsible-form';
 
 type CustomIcon = {
   id: string;
@@ -90,11 +91,8 @@ export function CustomIconsManager({ icons }: { icons: CustomIcon[] }) {
           </div>
         )}
 
-        <details className="pt-4 border-t border-border">
-          <summary className="cursor-pointer text-sm font-medium hover:text-accent">
-            + Добавить SVG-иконку
-          </summary>
-          <form onSubmit={onAdd} className="mt-3 space-y-3">
+        <CollapsibleForm label="Добавить SVG-иконку">
+          <form onSubmit={onAdd} className="space-y-3">
             <div>
               <Label htmlFor="icon-name">Имя (для отображения в списке)</Label>
               <Input
@@ -134,7 +132,7 @@ export function CustomIconsManager({ icons }: { icons: CustomIcon[] }) {
               Сохранить иконку
             </Button>
           </form>
-        </details>
+        </CollapsibleForm>
       </CardContent>
     </Card>
   );

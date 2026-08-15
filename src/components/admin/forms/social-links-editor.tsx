@@ -10,6 +10,7 @@ import { addSocialLink, deleteSocialLink } from '@/actions/content';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CollapsibleForm } from '@/components/admin/collapsible-form';
 
 type Social = { id: string; platform: string; url: string; icon: string | null };
 
@@ -91,11 +92,8 @@ export function SocialLinksEditor({
           </ul>
         )}
 
-        <details className="pt-4 border-t border-border">
-          <summary className="cursor-pointer text-sm font-medium hover:text-accent">
-            + Добавить соцсеть
-          </summary>
-          <form onSubmit={onAdd} className="mt-3 space-y-3">
+        <CollapsibleForm label="Добавить соцсеть">
+          <form onSubmit={onAdd} className="space-y-3">
             <div className="grid sm:grid-cols-3 gap-2">
               <div>
                 <Label className="text-xs">Платформа</Label>
@@ -120,7 +118,7 @@ export function SocialLinksEditor({
               Добавить
             </Button>
           </form>
-        </details>
+        </CollapsibleForm>
       </CardContent>
     </Card>
   );

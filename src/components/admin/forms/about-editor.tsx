@@ -10,6 +10,7 @@ import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { updateAbout, addNearbyObject, deleteNearbyObject } from '@/actions/content';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { CollapsibleForm } from '@/components/admin/collapsible-form';
 
 type NearbyObject = { id: string; name: string; distance: string; sortOrder: number };
 type About = {
@@ -123,11 +124,8 @@ export function AboutEditor({ about, projectId }: { about: About; projectId: str
             </ul>
           )}
 
-          <details>
-            <summary className="cursor-pointer text-sm font-medium hover:text-accent">
-              + Добавить объект инфраструктуры
-            </summary>
-            <form onSubmit={onAddNearby} className="mt-3 grid sm:grid-cols-3 gap-2 items-end">
+          <CollapsibleForm label="Добавить объект инфраструктуры">
+            <form onSubmit={onAddNearby} className="grid sm:grid-cols-3 gap-2 items-end">
               <div className="sm:col-span-2">
                 <Label htmlFor="nearby-name">Название</Label>
                 <Input id="nearby-name" name="name" required className="mt-1.5" placeholder="м. Охотный ряд" />
@@ -141,7 +139,7 @@ export function AboutEditor({ about, projectId }: { about: About; projectId: str
                 Добавить
               </Button>
             </form>
-          </details>
+          </CollapsibleForm>
         </div>
       </CardContent>
     </Card>

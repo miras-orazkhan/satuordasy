@@ -10,6 +10,7 @@ import { addSocialLink, deleteSocialLink } from '@/actions/content';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CollapsibleForm } from '@/components/admin/collapsible-form';
 
 type Social = { id: string; platform: string; url: string; icon: string | null };
 const ICON_OPTIONS = ['Send', 'Instagram', 'Youtube', 'Linkedin', 'Facebook', 'Twitter'];
@@ -84,11 +85,8 @@ export function GlobalSocialsEditor({ items = [] }: { items?: Social[] }) {
           </ul>
         )}
 
-        <details className="pt-4 border-t border-border">
-          <summary className="cursor-pointer text-sm font-medium hover:text-accent">
-            + Добавить глобальную соцсеть
-          </summary>
-          <form onSubmit={onAdd} className="mt-3 grid sm:grid-cols-3 gap-2 items-end">
+        <CollapsibleForm label="Добавить глобальную соцсеть">
+          <form onSubmit={onAdd} className="grid sm:grid-cols-3 gap-2 items-end">
             <div>
               <Label className="text-xs">Платформа</Label>
               <Input name="platform" required placeholder="Telegram" className="mt-1" />
@@ -111,7 +109,7 @@ export function GlobalSocialsEditor({ items = [] }: { items?: Social[] }) {
               Добавить
             </Button>
           </form>
-        </details>
+        </CollapsibleForm>
       </CardContent>
     </Card>
   );

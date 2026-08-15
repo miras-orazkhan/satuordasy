@@ -11,6 +11,7 @@ import { addInterior, deleteInterior } from '@/actions/content';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { MediaUploader } from '@/components/admin/media-uploader';
+import { CollapsibleForm } from '@/components/admin/collapsible-form';
 
 type Interior = {
   id: string;
@@ -94,11 +95,8 @@ export function InteriorsEditor({
           </div>
         )}
 
-        <details className="pt-4 border-t border-border">
-          <summary className="cursor-pointer text-sm font-medium hover:text-accent">
-            + Добавить интерьер
-          </summary>
-          <form onSubmit={onAdd} className="mt-3 space-y-3">
+        <CollapsibleForm label="Добавить интерьер">
+          <form onSubmit={onAdd} className="space-y-3">
             <MediaUploader value={imageUrl} onChange={setImageUrl} accept="image/*" label="Загрузить изображение интерьера" />
             <div>
               <Label htmlFor="intr-caption" className="text-xs">Подпись</Label>
@@ -113,7 +111,7 @@ export function InteriorsEditor({
               Добавить
             </Button>
           </form>
-        </details>
+        </CollapsibleForm>
       </CardContent>
     </Card>
   );

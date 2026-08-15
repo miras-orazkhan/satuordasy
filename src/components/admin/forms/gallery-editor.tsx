@@ -10,6 +10,7 @@ import { addGalleryImage, deleteGalleryImage } from '@/actions/content';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { MediaUploader } from '@/components/admin/media-uploader';
+import { CollapsibleForm } from '@/components/admin/collapsible-form';
 
 type GalleryItem = { id: string; url: string; caption: string | null; sortOrder: number };
 
@@ -75,11 +76,8 @@ export function GalleryEditor({ items, projectId }: { items: GalleryItem[]; proj
           </div>
         )}
 
-        <details className="pt-4 border-t border-border">
-          <summary className="cursor-pointer text-sm font-medium hover:text-accent">
-            + Добавить изображение
-          </summary>
-          <form onSubmit={onAdd} className="mt-3 space-y-3">
+        <CollapsibleForm label="Добавить изображение">
+          <form onSubmit={onAdd} className="space-y-3">
             <MediaUploader value={url} onChange={setUrl} accept="image/*" label="Загрузить изображение (16:10 рекомендуется)" />
             <div>
               <Label htmlFor="gal-caption">Подпись (необязательно)</Label>
@@ -90,7 +88,7 @@ export function GalleryEditor({ items, projectId }: { items: GalleryItem[]; proj
               Добавить
             </Button>
           </form>
-        </details>
+        </CollapsibleForm>
       </CardContent>
     </Card>
   );
