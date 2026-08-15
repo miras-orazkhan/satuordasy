@@ -91,6 +91,15 @@ export default async function ProjectPage({ params }: Params) {
     .map(([k, v]) => `${k}: ${v};`)
     .join(' ');
 
+  // Build schema.org JSON-LD safely — wrap in try/catch to avoid 500 if data has
+  // unexpected null/undefined values that break JSON.stringify on Vercel.
+  let schemaJson = '{}';
+  try {
+    schemaJson = JSON.stringify(buildSchema(project));
+  } catch (e) {
+    console.error('Schema build error:', e);
+  }
+
   return (
     <main
       className={`min-h-screen bg-background text-foreground ${theme.isDark ? 'dark' : ''}`}
@@ -127,15 +136,23 @@ export default async function ProjectPage({ params }: Params) {
 
       <InteriorsSection items={project.interiors} />
 
-      <LeadFormSection projectId={project.id} config={project.leadForm} />
+      <LeadFormSection
+        projectId={project.id}
+        config={project.leadForm ? {
+          formType: project.leadForm.formType,
+          bitrixPortalId: project.leadForm.bitrixPortalId,
+          bitrixFormId: project.leadForm.bitrixFormId,
+          bitrixEmbedCode: project.leadForm.bitrixEmbedCode,
+          sectionTitle: project.leadForm.sectionTitle,
+          sectionSubtitle: project.leadForm.sectionSubtitle,
+        } : null}
+      />
 
       <FooterSection socials={socials} brandName={brandName} projectTitle={project.title} />
 
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(buildSchema(project)),
-        }}
+        dangerouslySetInnerHTML={{ __html: schemaJson }}
       />
     </main>
   );
