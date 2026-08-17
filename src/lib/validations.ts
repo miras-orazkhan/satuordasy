@@ -1,5 +1,31 @@
 import { z } from 'zod';
 
+// ---------- HELPERS ----------
+/**
+ * Validates a URL or relative path.
+ * Accepts:
+ *   - Empty string (field is optional)
+ *   - Absolute URLs (https://example.com/image.png)
+ *   - Relative paths (/api/r2/uploads/xxx.png, /uploads/xxx.png)
+ *
+ * We can't use z.string().url() because MediaUploader returns relative paths
+ * like /api/r2/uploads/... which are valid on our domain but not absolute URLs.
+ */
+const urlOrPath = z
+  .string()
+  .max(2000)
+  .refine(
+    (val) =>
+      !val ||
+      val.startsWith('/') || // relative path
+      val.startsWith('http://') ||
+      val.startsWith('https://') ||
+      val.startsWith('data:'),
+    { message: 'Неверный URL' }
+  )
+  .optional()
+  .or(z.literal(''));
+
 // ---------- AUTH ----------
 export const loginSchema = z.object({
   email: z.string().email('Введите корректный email'),
@@ -35,7 +61,7 @@ export const projectSchema = z.object({
   seoTitle: z.string().max(200).optional().or(z.literal('')),
   seoDescription: z.string().max(500).optional().or(z.literal('')),
   seoKeywords: z.string().max(500).optional().or(z.literal('')),
-  ogImageUrl: z.string().url().optional().or(z.literal('')),
+  ogImageUrl: urlOrPath,
   geoRegion: z.string().max(100).optional().or(z.literal('')),
   geoCity: z.string().max(100).optional().or(z.literal('')),
   geoLat: z.coerce.number().min(-90).max(90).optional().or(z.literal('')),
@@ -66,7 +92,7 @@ export type AdvantageInput = z.infer<typeof advantageSchema>;
 // ---------- ABOUT ----------
 export const aboutSchema = z.object({
   description: z.string().min(2).max(5000),
-  mapEmbedUrl: z.string().url().optional().or(z.literal('')),
+  mapEmbedUrl: urlOrPath,
   mapLat: z.coerce.number().optional(),
   mapLng: z.coerce.number().optional(),
 });
@@ -121,7 +147,10 @@ export type CatalogInput = z.infer<typeof catalogSchema>;
 // ---------- SOCIAL ----------
 export const socialLinkSchema = z.object({
   platform: z.string().min(1).max(50),
-  url: z.string().url(),
+  url: z.string().min(1).max(2000).refine(
+    (val) => val.startsWith('/') || val.startsWith('http://') || val.startsWith('https://') || val.startsWith('data:'),
+    { message: 'Неверный URL' }
+  ),
   icon: z.string().max(100).optional().or(z.literal('')),
   sortOrder: z.number().int().default(0),
   projectId: z.string().optional().nullable(),
@@ -141,7 +170,7 @@ export type LeadFormConfigInput = z.infer<typeof leadFormConfigSchema>;
 
 // ---------- SETTINGS ----------
 export const settingsSchema = z.object({
-  faviconUrl: z.string().url().optional().or(z.literal('')),
+  faviconUrl: urlOrPath,
   gtmContainerId: z
     .string()
     .max(30)
