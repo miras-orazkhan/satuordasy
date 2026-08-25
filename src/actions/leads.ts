@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { leadSchema } from '@/lib/validations';
+import { leadSchema } from '@/lib/lead-validation';
 import { revalidatePath } from 'next/cache';
 
 export type SubmitLeadResult =

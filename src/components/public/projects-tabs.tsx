@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowUpRight } from 'lucide-react';
 
 type ProjectItem = {
@@ -62,10 +63,14 @@ export function ProjectsTabs({ projects }: { projects: ProjectItem[] }) {
         >
           {project.heroImage && (
              
-            <img
+            <Image
               src={project.heroImage}
               alt={project.title}
+              fill
               className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+              sizes="(max-width: 767px) calc(100vw - 3rem), 50vw"
+              quality={75}
+              loading="lazy"
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
@@ -90,6 +95,9 @@ export function ProjectsTabs({ projects }: { projects: ProjectItem[] }) {
           <div className="mt-8 flex items-center gap-3">
             <Link
               href={`/zhk/${project.slug}`}
+              reloadDocument
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-full bg-foreground text-background px-6 py-3 text-sm font-medium hover:opacity-90 transition-opacity"
             >
               Перейти к проекту <ArrowUpRight className="h-4 w-4" />

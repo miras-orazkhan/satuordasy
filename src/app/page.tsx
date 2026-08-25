@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { db } from '@/lib/db';
 import { getSetting, getHomePage } from '@/lib/settings';
 import { ProjectsTabs } from '@/components/public/projects-tabs';
@@ -9,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function Home() {
-  const [projects, brandName, home] = await Promise.all([
+  const [projects, brandName, home, socials] = await Promise.all([
     db.project.findMany({
       where: { status: 'published' },
       select: {
@@ -26,6 +27,10 @@ export default async function Home() {
     }),
     getSetting('brandName'),
     getHomePage(),
+    db.socialLink.findMany({
+      where: { projectId: null },
+      orderBy: { sortOrder: 'asc' },
+    }),
   ]);
 
   // HomePage settings override brandName if set
@@ -39,10 +44,13 @@ export default async function Home() {
           <Link href="/" className="flex items-center gap-3 text-lg md:text-xl font-semibold tracking-tight">
             {home.logoUrl ? (
                
-              <img
+              <Image
                 src={home.logoUrl}
                 alt={siteName}
-                className="h-8 md:h-10 w-auto"
+                width={40}
+                height={40}
+                className="h-8 md:h-10 w-auto object-contain"
+                loading="lazy"
               />
             ) : null}
             {siteName}
@@ -54,10 +62,14 @@ export default async function Home() {
       <section className="relative h-[70vh] min-h-[480px] w-full overflow-hidden">
         {home.heroImage ? (
            
-          <img
+          <Image
             src={home.heroImage}
             alt={siteName}
+            fill
             className="absolute inset-0 h-full w-full object-cover"
+            sizes="100vw"
+            quality={75}
+            priority
           />
         ) : (
           <div className="absolute inset-0 bg-muted" />
@@ -113,16 +125,18 @@ export default async function Home() {
       </section>
 
       {/* Footer */}
-      <Footer brandName={siteName} />
+      <Footer brandName={siteName} socials={socials} />
     </main>
   );
 }
 
-async function Footer({ brandName }: { brandName: string }) {
-  const socials = await db.socialLink.findMany({
-    where: { projectId: null },
-    orderBy: { sortOrder: 'asc' },
-  });
+function Footer({
+  brandName,
+  socials,
+}: {
+  brandName: string;
+  socials: { id: string; url: string; platform: string }[];
+}) {
   return (
     <footer className="border-t border-border mt-auto">
       <div className="container-premium py-10 md:py-16">

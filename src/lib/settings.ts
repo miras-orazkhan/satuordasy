@@ -1,11 +1,10 @@
 import { db } from '@/lib/db';
+import { cache } from 'react';
 
 /**
  * In-memory cache of global settings (favicon, GTM, robots, brand, etc.).
  * Re-validated on each request via revalidatePath, but cached within a single render.
  */
-let cache: Record<string, string> | null = null;
-
 const DEFAULTS: Record<string, string> = {
   faviconUrl: '',
   gtmContainerId: '',
@@ -16,20 +15,18 @@ const DEFAULTS: Record<string, string> = {
   brandName: 'Satu Ordasy',
 };
 
-export async function getSettings(): Promise<Record<string, string>> {
-  if (cache) return cache;
+export const getSettings = cache(async (): Promise<Record<string, string>> => {
   try {
     const rows = await db.setting.findMany();
     const result: Record<string, string> = { ...DEFAULTS };
     for (const r of rows) {
       result[r.key] = r.value;
     }
-    // Cache only for the lifetime of a request, not across requests
     return result;
   } catch {
     return { ...DEFAULTS };
   }
-}
+});
 
 export async function getSetting(key: string): Promise<string> {
   const settings = await getSettings();

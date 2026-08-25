@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { ArrowDown } from 'lucide-react';
 import { scrollToId } from '@/lib/scroll';
@@ -45,11 +46,15 @@ export function HeroSection({ title, subtitle, ctaText, desktopImage, mobileImag
     >
       <div className="absolute inset-0 overflow-hidden">
         { }
-        <img
+        <Image
           src={desktopImage || mobileImage || ''}
           alt={title}
+          fill
           className="absolute inset-0 h-full w-full object-cover will-change-transform"
           style={{ transform: `translate3d(0, ${translateY}px, 0) scale(${scale})` }}
+          sizes="100vw"
+          quality={75}
+          priority
         />
       </div>
       {/* Single subtle bottom gradient for text readability — no decorative stripes */}

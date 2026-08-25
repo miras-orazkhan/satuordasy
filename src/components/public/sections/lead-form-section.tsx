@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { leadSchema } from '@/lib/validations';
 import { submitLead } from '@/actions/leads';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +20,26 @@ type LeadFormConfig = {
   sectionTitle: string | null;
   sectionSubtitle: string | null;
 };
+
+type LeadData = {
+  projectId: string;
+  name: string;
+  phone: string;
+  comment: string;
+  consent: boolean;
+};
+
+function validateLead(data: LeadData): Record<string, string> {
+  const errors: Record<string, string> = {};
+  if (!data.name || data.name.length < 2) errors.name = 'Имя слишком короткое';
+  else if (data.name.length > 100) errors.name = 'Имя слишком длинное';
+  if (!data.phone || data.phone.length < 6) errors.phone = 'Введите корректный телефон';
+  else if (data.phone.length > 30) errors.phone = 'Слишком длинный номер';
+  else if (!/^[+\d\s()-]+$/.test(data.phone)) errors.phone = 'Допускаются только цифры и символы +() -';
+  if (data.comment.length > 1000) errors.comment = 'Комментарий слишком длинный';
+  if (!data.consent) errors.consent = 'Требуется согласие на обработку ПД';
+  return errors;
+}
 
 export function LeadFormSection({
   projectId,
@@ -95,21 +114,15 @@ function NativeLeadForm({ projectId }: { projectId: string }) {
       consent: fd.get('consent') === 'on' || fd.get('consent') === 'true',
     };
 
-    // Client-side Zod validation (mirrors server-side)
-    const parsed = leadSchema.safeParse(data);
-    if (!parsed.success) {
-      const errs: Record<string, string> = {};
-      for (const issue of parsed.error.issues) {
-        const key = issue.path[0] as string;
-        if (!errs[key]) errs[key] = issue.message;
-      }
-      setErrors(errs);
+    const validationErrors = validateLead(data);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       toast.error('Проверьте введённые данные');
       return;
     }
 
     startTransition(async () => {
-      const result = await submitLead(parsed.data);
+      const result = await submitLead(data);
       if (result.ok) {
         setDone(true);
         toast.success('Заявка отправлена', {
