@@ -12,5 +12,5 @@
     "allowSyntheticDefaultImports": true,
     "types": ["node"]
   },
-  "include": ["server/**/*.ts", "src/lib/storage.ts", "src/lib/theme-presets.ts", "scripts/**/*.ts"]
+  "include": ["server.ts", "server/**/*.ts", "src/lib/storage.ts", "src/lib/theme-presets.ts", "scripts/**/*.ts"]
 }

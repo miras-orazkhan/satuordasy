@@ -17,6 +17,9 @@ importers:
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
+      hono:
+        specifier: ^4.9.8
+        version: 4.13.4
       htmx.org:
         specifier: ^2.0.7
         version: 2.0.10
@@ -397,6 +400,10 @@ packages:
   giget@2.0.0:
     resolution: {integrity: sha512-L5bGsVkxJbJgdnwyuheIunkGatUF/zssUoxxjACCseZYAVbaqdh9Tsmmlkl8vYan09H7sbvKt4pS8GqKLBrEzA==}
     hasBin: true
+
+  hono@4.13.4:
+    resolution: {integrity: sha512-AGEwKIyRMHRv1t8Wjwa3LHxQ61X5CqrdFT+4BRNTpqS5aJNnpl5WLjADb7vFlJzI/8uK7T5QLVApCMQKNa3LgQ==}
+    engines: {node: '>=16.9.0'}
 
   htmx.org@2.0.10:
     resolution: {integrity: sha512-kdeJe7ZVwaS6QMz/ebBIVtZdpwen6L0OQ5GOhPV9MKBb196TCZeZu4yA7ZIQsaLKv7EpXz+So7KSXNuHXhj7Cw==}
@@ -878,6 +885,8 @@ snapshots:
       node-fetch-native: 1.6.7
       nypm: 0.6.9
       pathe: 2.0.3
+
+  hono@4.13.4: {}
 
   htmx.org@2.0.10: {}
 
