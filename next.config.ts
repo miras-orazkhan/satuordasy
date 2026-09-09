@@ -7,6 +7,15 @@ const nextConfig: NextConfig = {
   },
   reactStrictMode: false,
 
+  // Allow next/image to load images from these remote hosts (seed data uses Unsplash).
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'cdn-ru.bitrix24.kz' },
+      { protocol: 'https', hostname: '**' },
+    ],
+  },
+
   // The app may be served behind a cloud gateway that rewrites Host/Origin.
   // Server Actions in Next.js 16 reject requests where x-forwarded-host != origin.
   // List all known gateway hosts here.

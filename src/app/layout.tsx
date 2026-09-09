@@ -83,6 +83,11 @@ export default async function RootLayout({
   return (
     <html lang="ru" suppressHydrationWarning>
       <head>
+        {/* Facebook domain verification — required by Meta Business to verify ownership of satuordasy.com */}
+        <meta
+          name="facebook-domain-verification"
+          content="omt7docjf084h2m5tj54d5i974d0fy"
+        />
         {gtmId && <GtmScript gtmId={gtmId} />}
         {faviconUrl && <link rel="icon" href={faviconUrl} />}
       </head>
