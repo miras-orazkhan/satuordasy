@@ -176,6 +176,22 @@ export const privacySchema = z.object({
 });
 export type PrivacyInput = z.infer<typeof privacySchema>;
 
+// ---------- FOOTER ----------
+export const footerSchema = z.object({
+  phone: z.string().max(100).optional().or(z.literal('')),
+  email: z.string().max(200).optional().or(z.literal('')),
+  address: z.string().max(500).optional().or(z.literal('')),
+  legalName: z.string().max(300).optional().or(z.literal('')),
+  bin: z.string().max(50).optional().or(z.literal('')),
+  iik: z.string().max(100).optional().or(z.literal('')),
+  bankName: z.string().max(200).optional().or(z.literal('')),
+  bic: z.string().max(50).optional().or(z.literal('')),
+  workingHours: z.string().max(200).optional().or(z.literal('')),
+  copyrightText: z.string().max(500).optional().or(z.literal('')),
+  disclaimer: z.string().max(1000).optional().or(z.literal('')),
+});
+export type FooterInput = z.infer<typeof footerSchema>;
+
 // ---------- USER ----------
 export const userCreateSchema = z.object({
   email: z.string().email(),

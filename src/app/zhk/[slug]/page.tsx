@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { db } from '@/lib/db';
 import { getPublishedProjectBySlug, getGlobalSocials } from '@/lib/queries';
-import { getSetting } from '@/lib/settings';
+import { getSetting, getFooter } from '@/lib/settings';
 import { getThemePreset, getFontPreset } from '@/lib/theme-presets';
 
 import { HeroSection } from '@/components/public/sections/hero-section';
@@ -82,6 +82,7 @@ export default async function ProjectPage({ params }: Params) {
   if (!project) notFound();
 
   const brandName = await getSetting('brandName');
+  const footer = await getFooter();
   const globalSocials = await getGlobalSocials();
   const socials = project.socials.length > 0 ? project.socials : globalSocials;
 
@@ -148,7 +149,13 @@ export default async function ProjectPage({ params }: Params) {
         } : null}
       />
 
-      <FooterSection socials={socials} brandName={brandName} projectTitle={project.title} />
+      <FooterSection
+        socials={socials}
+        brandName={brandName}
+        projectTitle={project.title}
+        showBackToProjects
+        footer={footer}
+      />
 
       <script
         type="application/ld+json"

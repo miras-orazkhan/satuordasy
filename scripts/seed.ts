@@ -63,6 +63,26 @@ async function main() {
     },
   });
 
+  // --- Footer (singleton) ---
+  await prisma.footer.upsert({
+    where: { id: 'singleton' },
+    update: {},
+    create: {
+      id: 'singleton',
+      phone: '+7 700 000 00 00',
+      email: 'info@satuordasy.com',
+      address: 'г. Шымкент, ул. Абая, 1',
+      legalName: 'ТОО «Satu Ordasy»',
+      bin: '000000000000',
+      iik: null,
+      bankName: null,
+      bic: null,
+      workingHours: 'Пн–Пт 9:00–18:00',
+      copyrightText: null,
+      disclaimer: 'Информация на сайте носит ознакомительный характер и не является публичной офертой.',
+    },
+  });
+
   // --- Demo ЖК 1: NOIR (dark, premium) ---
   const noir = await prisma.project.upsert({
     where: { slug: 'vela-tower' },

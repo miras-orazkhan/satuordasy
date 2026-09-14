@@ -1,7 +1,8 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { settingsSchema, privacySchema, userCreateSchema } from '@/lib/validations';
+import { settingsSchema, privacySchema, footerSchema, userCreateSchema } from '@/lib/validations';
+import { setFooter } from '@/lib/settings';
 import bcrypt from 'bcryptjs';
 import { revalidatePath } from 'next/cache';
 
@@ -47,6 +48,32 @@ export async function updatePrivacy(input: unknown): Promise<Result> {
     update: { content: parsed.data.content },
   });
   revalidatePath('/privacy');
+  revalidatePath('/admin/settings');
+  return { ok: true };
+}
+
+// ---------- FOOTER ----------
+export async function updateFooter(input: unknown): Promise<Result> {
+  const parsed = footerSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: 'Проверьте поля подвала', fieldErrors: parsed.error.flatten().fieldErrors as Record<string, string[]> };
+  }
+  const data = parsed.data;
+  await setFooter({
+    phone: data.phone || null,
+    email: data.email || null,
+    address: data.address || null,
+    legalName: data.legalName || null,
+    bin: data.bin || null,
+    iik: data.iik || null,
+    bankName: data.bankName || null,
+    bic: data.bic || null,
+    workingHours: data.workingHours || null,
+    copyrightText: data.copyrightText || null,
+    disclaimer: data.disclaimer || null,
+  });
+  revalidatePath('/', 'layout');
+  revalidatePath('/zhk/[slug]');
   revalidatePath('/admin/settings');
   return { ok: true };
 }

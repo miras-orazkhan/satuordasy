@@ -215,6 +215,25 @@ model PrivacyPolicy {
   updatedAt DateTime @updatedAt
 }
 
+// ---------- FOOTER (editable, singleton) ----------
+// Site-wide footer with contacts and legal information.
+// Managed via /admin/settings — FooterForm component.
+model Footer {
+  id            String   @id @default("singleton")
+  phone         String?  // contact phone, e.g. "+7 700 000 00 00"
+  email         String?  // contact email, e.g. "info@satuordasy.com"
+  address       String?  // physical address, e.g. "Шымкент, ул. Абая, 1"
+  legalName     String?  // company legal name, e.g. "ТОО «Satu Ordasy»"
+  bin           String?  // Business Identification Number (KZ) / ИНН (RU)
+  iik           String?  // ИИК bank account (KZ)
+  bankName      String?  // bank name
+  bic           String?  // BIC/SWIFT
+  workingHours  String?  // e.g. "Пн–Пт 9:00–18:00"
+  copyrightText String?  // overrides default "© {year} {brandName}. Все права защищены."
+  disclaimer    String?  // small print below footer
+  updatedAt     DateTime @updatedAt
+}
+
 // ---------- HOME PAGE (editable) ----------
 model HomePage {
   id            String   @id @default("singleton")

@@ -69,6 +69,91 @@ export async function setPrivacyPolicy(content: string): Promise<void> {
   });
 }
 
+// ---------- FOOTER (editable singleton) ----------
+export type FooterData = {
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  legalName: string | null;
+  bin: string | null;
+  iik: string | null;
+  bankName: string | null;
+  bic: string | null;
+  workingHours: string | null;
+  copyrightText: string | null;
+  disclaimer: string | null;
+};
+
+const DEFAULT_FOOTER: FooterData = {
+  phone: '+7 700 000 00 00',
+  email: 'info@satuordasy.com',
+  address: null,
+  legalName: null,
+  bin: null,
+  iik: null,
+  bankName: null,
+  bic: null,
+  workingHours: 'Пн–Пт 9:00–18:00',
+  copyrightText: null,
+  disclaimer: 'Информация на сайте носит ознакомительный характер и не является публичной офертой.',
+};
+
+export async function getFooter(): Promise<FooterData> {
+  try {
+    const row = await db.footer.findUnique({ where: { id: 'singleton' } });
+    if (!row) return DEFAULT_FOOTER;
+    return {
+      phone: row.phone,
+      email: row.email,
+      address: row.address,
+      legalName: row.legalName,
+      bin: row.bin,
+      iik: row.iik,
+      bankName: row.bankName,
+      bic: row.bic,
+      workingHours: row.workingHours,
+      copyrightText: row.copyrightText,
+      disclaimer: row.disclaimer,
+    };
+  } catch {
+    // DB not available (build time)
+    return DEFAULT_FOOTER;
+  }
+}
+
+export async function setFooter(data: FooterData): Promise<void> {
+  await db.footer.upsert({
+    where: { id: 'singleton' },
+    create: {
+      id: 'singleton',
+      phone: data.phone || null,
+      email: data.email || null,
+      address: data.address || null,
+      legalName: data.legalName || null,
+      bin: data.bin || null,
+      iik: data.iik || null,
+      bankName: data.bankName || null,
+      bic: data.bic || null,
+      workingHours: data.workingHours || null,
+      copyrightText: data.copyrightText || null,
+      disclaimer: data.disclaimer || null,
+    },
+    update: {
+      phone: data.phone || null,
+      email: data.email || null,
+      address: data.address || null,
+      legalName: data.legalName || null,
+      bin: data.bin || null,
+      iik: data.iik || null,
+      bankName: data.bankName || null,
+      bic: data.bic || null,
+      workingHours: data.workingHours || null,
+      copyrightText: data.copyrightText || null,
+      disclaimer: data.disclaimer || null,
+    },
+  });
+}
+
 // ---------- HOME PAGE (editable) ----------
 const DEFAULT_HOME: { title: string; subtitle: string | null; heroImage: string | null; logoUrl: string | null } = {
   title: 'Satu Ordasy',

@@ -1,10 +1,11 @@
 import { requireAdmin } from '@/lib/session';
-import { getSettings, getPrivacyPolicy, getHomePage, listCustomIcons } from '@/lib/settings';
+import { getSettings, getPrivacyPolicy, getHomePage, getFooter, listCustomIcons } from '@/lib/settings';
 import { db } from '@/lib/db';
 import { SettingsForm } from '@/components/admin/forms/settings-form';
 import { PrivacyForm } from '@/components/admin/forms/privacy-form';
 import { GlobalSocialsEditor } from '@/components/admin/forms/global-socials-editor';
 import { HomePageForm } from '@/components/admin/forms/home-page-form';
+import { FooterForm } from '@/components/admin/forms/footer-form';
 import { CustomIconsManager } from '@/components/admin/forms/custom-icons-manager';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -12,7 +13,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function SettingsPage() {
   await requireAdmin();
-  const [settings, privacy, home, socials, customIcons] = await Promise.all([
+  const [settings, privacy, home, socials, footer, customIcons] = await Promise.all([
     getSettings(),
     getPrivacyPolicy(),
     getHomePage(),
@@ -20,6 +21,7 @@ export default async function SettingsPage() {
       where: { projectId: null },
       orderBy: { sortOrder: 'asc' },
     }),
+    getFooter(),
     listCustomIcons(),
   ]);
 
@@ -35,6 +37,7 @@ export default async function SettingsPage() {
 
       <HomePageForm initial={home} />
       <SettingsForm initial={settings} />
+      <FooterForm initial={footer} />
       <CustomIconsManager icons={customIcons} />
       <GlobalSocialsEditor items={socials} />
       <Card>

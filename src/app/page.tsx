@@ -1,16 +1,17 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { db } from '@/lib/db';
-import { getSetting, getHomePage } from '@/lib/settings';
+import { getSetting, getHomePage, getFooter } from '@/lib/settings';
 import { ProjectsTabs } from '@/components/public/projects-tabs';
 import { getThemePreset } from '@/lib/theme-presets';
+import { FooterSection } from '@/components/public/sections/footer-section';
 
 // Render at request time (no DB at build time on Vercel)
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function Home() {
-  const [projects, brandName, home, socials] = await Promise.all([
+  const [projects, brandName, home, socials, footer] = await Promise.all([
     db.project.findMany({
       where: { status: 'published' },
       select: {
@@ -31,6 +32,7 @@ export default async function Home() {
       where: { projectId: null },
       orderBy: { sortOrder: 'asc' },
     }),
+    getFooter(),
   ]);
 
   // HomePage settings override brandName if set
@@ -125,44 +127,11 @@ export default async function Home() {
       </section>
 
       {/* Footer */}
-      <Footer brandName={siteName} socials={socials} />
+      <FooterSection
+        brandName={siteName}
+        socials={socials}
+        footer={footer}
+      />
     </main>
-  );
-}
-
-function Footer({
-  brandName,
-  socials,
-}: {
-  brandName: string;
-  socials: { id: string; url: string; platform: string }[];
-}) {
-  return (
-    <footer className="border-t border-border mt-auto">
-      <div className="container-premium py-10 md:py-16">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <p className="text-xl font-semibold tracking-tight">{brandName}</p>
-            <p className="text-sm text-muted-foreground mt-1">Выберите свой идеальный дом</p>
-          </div>
-          <div className="flex items-center gap-6">
-            {socials.map((s) => (
-              <a
-                key={s.id}
-                href={s.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {s.platform}
-              </a>
-            ))}
-            <Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Политика конфиденциальности
-            </Link>
-          </div>
-        </div>
-      </div>
-    </footer>
   );
 }
