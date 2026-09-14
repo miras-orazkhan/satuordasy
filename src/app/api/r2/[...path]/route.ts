@@ -25,8 +25,12 @@ function isR2Configured() {
   );
 }
 
+// S3Client singleton — creating a new client on every request is expensive
+// (TLS handshake + credential resolution). Reuse one across all requests.
+let _r2Client: S3Client | null = null;
 function getR2Client(): S3Client {
-  return new S3Client({
+  if (_r2Client) return _r2Client;
+  _r2Client = new S3Client({
     region: 'auto',
     endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
     credentials: {
@@ -34,6 +38,7 @@ function getR2Client(): S3Client {
       secretAccessKey: R2_SECRET_ACCESS_KEY!,
     },
   });
+  return _r2Client;
 }
 
 const CONTENT_TYPES: Record<string, string> = {
@@ -46,7 +51,10 @@ const CONTENT_TYPES: Record<string, string> = {
   '.pdf': 'application/pdf',
 };
 
-export const dynamic = 'force-dynamic';
+// ISR — cache the image proxy response for 1 hour.
+// Images are immutable (filenames include timestamp + random suffix),
+// so we can safely cache at the Vercel CDN edge.
+export const revalidate = 3600;
 
 export async function GET(
   _req: Request,

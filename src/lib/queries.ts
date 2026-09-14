@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { unstable_cache } from 'next/cache';
 
 /**
  * Strip Date objects from a Prisma result so it can be passed from a Server
@@ -14,27 +15,36 @@ function toSerializable<T>(obj: T): T {
   return JSON.parse(JSON.stringify(obj));
 }
 
-export async function getPublishedProjectBySlug(slug: string) {
-  const project = await db.project.findFirst({
-    where: { slug, status: 'published' },
-    include: {
-      hero: true,
-      about: { include: { nearby: { orderBy: { sortOrder: 'asc' } } } },
-      advantages: { orderBy: { sortOrder: 'asc' } },
-      gallery: { orderBy: { sortOrder: 'asc' } },
-      floorCategories: {
-        orderBy: { sortOrder: 'asc' },
-        include: { units: { orderBy: { sortOrder: 'asc' } } },
+/**
+ * Cached version of getPublishedProjectBySlug.
+ * Cache key: slug. TTL: 300 seconds (5 minutes).
+ * Revalidated when a project is updated via admin actions (revalidatePath).
+ */
+export const getPublishedProjectBySlug = unstable_cache(
+  async (slug: string) => {
+    const project = await db.project.findFirst({
+      where: { slug, status: 'published' },
+      include: {
+        hero: true,
+        about: { include: { nearby: { orderBy: { sortOrder: 'asc' } } } },
+        advantages: { orderBy: { sortOrder: 'asc' } },
+        gallery: { orderBy: { sortOrder: 'asc' } },
+        floorCategories: {
+          orderBy: { sortOrder: 'asc' },
+          include: { units: { orderBy: { sortOrder: 'asc' } } },
+        },
+        interiors: { orderBy: { sortOrder: 'asc' } },
+        catalog: true,
+        socials: { orderBy: { sortOrder: 'asc' } },
+        leadForm: true,
       },
-      interiors: { orderBy: { sortOrder: 'asc' } },
-      catalog: true,
-      socials: { orderBy: { sortOrder: 'asc' } },
-      leadForm: true,
-    },
-  });
-  // Strip Date objects so the result can be passed to 'use client' components
-  return project ? toSerializable(project) : null;
-}
+    });
+    // Strip Date objects so the result can be passed to 'use client' components
+    return project ? toSerializable(project) : null;
+  },
+  ['project-by-slug'],
+  { revalidate: 300 } // 5 minutes
+);
 
 export async function getGlobalSocials() {
   const socials = await db.socialLink.findMany({

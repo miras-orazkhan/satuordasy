@@ -6,9 +6,8 @@ import { ProjectsTabs } from '@/components/public/projects-tabs';
 import { getThemePreset } from '@/lib/theme-presets';
 import { FooterSection } from '@/components/public/sections/footer-section';
 
-// Render at request time (no DB at build time on Vercel)
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// ISR — cache for 5 minutes. revalidatePath in admin actions purges on save.
+export const revalidate = 300;
 
 export default async function Home() {
   const [projects, brandName, home, socials, footer] = await Promise.all([

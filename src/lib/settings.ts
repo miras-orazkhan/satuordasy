@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 
 /**
  * In-memory cache of global settings (favicon, GTM, robots, brand, etc.).
@@ -15,18 +16,22 @@ const DEFAULTS: Record<string, string> = {
   brandName: 'Satu Ordasy',
 };
 
-export const getSettings = cache(async (): Promise<Record<string, string>> => {
-  try {
-    const rows = await db.setting.findMany();
-    const result: Record<string, string> = { ...DEFAULTS };
-    for (const r of rows) {
-      result[r.key] = r.value;
+export const getSettings = unstable_cache(
+  async (): Promise<Record<string, string>> => {
+    try {
+      const rows = await db.setting.findMany();
+      const result: Record<string, string> = { ...DEFAULTS };
+      for (const r of rows) {
+        result[r.key] = r.value;
+      }
+      return result;
+    } catch {
+      return { ...DEFAULTS };
     }
-    return result;
-  } catch {
-    return { ...DEFAULTS };
-  }
-});
+  },
+  ['settings-all'],
+  { revalidate: 300 }
+);
 
 export async function getSetting(key: string): Promise<string> {
   const settings = await getSettings();
@@ -98,28 +103,31 @@ const DEFAULT_FOOTER: FooterData = {
   disclaimer: 'Информация на сайте носит ознакомительный характер и не является публичной офертой.',
 };
 
-export async function getFooter(): Promise<FooterData> {
-  try {
-    const row = await db.footer.findUnique({ where: { id: 'singleton' } });
-    if (!row) return DEFAULT_FOOTER;
-    return {
-      phone: row.phone,
-      email: row.email,
-      address: row.address,
-      legalName: row.legalName,
-      bin: row.bin,
-      iik: row.iik,
-      bankName: row.bankName,
-      bic: row.bic,
-      workingHours: row.workingHours,
-      copyrightText: row.copyrightText,
-      disclaimer: row.disclaimer,
-    };
-  } catch {
-    // DB not available (build time)
-    return DEFAULT_FOOTER;
-  }
-}
+export const getFooter = unstable_cache(
+  async (): Promise<FooterData> => {
+    try {
+      const row = await db.footer.findUnique({ where: { id: 'singleton' } });
+      if (!row) return DEFAULT_FOOTER;
+      return {
+        phone: row.phone,
+        email: row.email,
+        address: row.address,
+        legalName: row.legalName,
+        bin: row.bin,
+        iik: row.iik,
+        bankName: row.bankName,
+        bic: row.bic,
+        workingHours: row.workingHours,
+        copyrightText: row.copyrightText,
+        disclaimer: row.disclaimer,
+      };
+    } catch {
+      return DEFAULT_FOOTER;
+    }
+  },
+  ['footer-singleton'],
+  { revalidate: 300 }
+);
 
 export async function setFooter(data: FooterData): Promise<void> {
   await db.footer.upsert({
@@ -162,21 +170,24 @@ const DEFAULT_HOME: { title: string; subtitle: string | null; heroImage: string 
   logoUrl: null,
 };
 
-export async function getHomePage() {
-  try {
-    const row = await db.homePage.findUnique({ where: { id: 'singleton' } });
-    if (!row) return DEFAULT_HOME;
-    return {
-      title: row.title,
-      subtitle: row.subtitle,
-      heroImage: row.heroImage,
-      logoUrl: row.logoUrl,
-    };
-  } catch {
-    // DB not available (build time)
-    return DEFAULT_HOME;
-  }
-}
+export const getHomePage = unstable_cache(
+  async () => {
+    try {
+      const row = await db.homePage.findUnique({ where: { id: 'singleton' } });
+      if (!row) return DEFAULT_HOME;
+      return {
+        title: row.title,
+        subtitle: row.subtitle,
+        heroImage: row.heroImage,
+        logoUrl: row.logoUrl,
+      };
+    } catch {
+      return DEFAULT_HOME;
+    }
+  },
+  ['home-page-singleton'],
+  { revalidate: 300 }
+);
 
 export async function setHomePage(data: {
   title: string;

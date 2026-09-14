@@ -4,7 +4,6 @@ import { db } from '@/lib/db';
 import { getPublishedProjectBySlug, getGlobalSocials } from '@/lib/queries';
 import { getSetting, getFooter } from '@/lib/settings';
 import { getThemePreset, getFontPreset } from '@/lib/theme-presets';
-
 import { HeroSection } from '@/components/public/sections/hero-section';
 import { AdvantagesSection } from '@/components/public/sections/advantages-section';
 import { AboutSection } from '@/components/public/sections/about-section';
@@ -15,28 +14,16 @@ import { LeadFormSection } from '@/components/public/sections/lead-form-section'
 import { FooterSection } from '@/components/public/sections/footer-section';
 import { ProjectHeader } from '@/components/public/project-header';
 
-// Render at request time (no DB at build time on Vercel)
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// ISR — cache the rendered page for 5 minutes.
+// revalidatePath in admin actions purges the cache when content changes.
+export const revalidate = 300;
 
 type Params = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
-  const project = await db.project.findFirst({
-    where: { slug, status: 'published' },
-    select: {
-      title: true,
-      seoTitle: true,
-      seoDescription: true,
-      seoKeywords: true,
-      ogImageUrl: true,
-      geoRegion: true,
-      geoCity: true,
-      geoLat: true,
-      geoLng: true,
-    },
-  });
+  // Reuse the cached project query — avoids a duplicate DB hit
+  const project = await getPublishedProjectBySlug(slug);
   if (!project) return {};
 
   const title = project.seoTitle ?? project.title;
