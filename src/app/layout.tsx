@@ -90,6 +90,15 @@ export default async function RootLayout({
         />
         {gtmId && <GtmScript gtmId={gtmId} />}
         {faviconUrl && <link rel="icon" href={faviconUrl} />}
+
+        {/* Performance: preconnect to R2 CDN and Yandex Maps (loaded on /zhk/[slug]) */}
+        <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        {/* Yandex Maps embed iframe */}
+        <link rel="preconnect" href="https://yandex.ru" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://yandex.ru" />
+        {/* Bitrix24 form widget (only loaded on /zhk/[slug] when configured) */}
+        <link rel="dns-prefetch" href="https://cdn-ru.bitrix24.kz" />
       </head>
       <body
         className={`${inter.variable} ${manrope.variable} ${sora.variable} ${plusJakarta.variable} antialiased bg-background text-foreground font-sans`}

@@ -75,13 +75,20 @@ export function FloorPlansSection({
             {activeCategory.units.map((unit, i) => (
               <Reveal key={unit.id} delay={i * 0.04}>
                 <article className="group h-full rounded-2xl md:rounded-3xl border border-border overflow-hidden bg-card hover:shadow-lg hover:shadow-black/[0.03] transition-all">
-                  <div className="relative aspect-[4/3] bg-muted overflow-hidden">
+                  <div className="relative aspect-[4/3] bg-muted overflow-hidden media-placeholder">
                     {unit.imageUrl ? (
                       <img
                         src={unit.imageUrl}
                         alt={unit.name ?? 'Планировка'}
-                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        width={600}
+                        height={450}
                         loading="lazy"
+                        decoding="async"
+                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 img-fade-in"
+                        onLoad={(e) => {
+                          (e.target as HTMLImageElement).parentElement?.classList.remove('is-loading');
+                          (e.target as HTMLImageElement).classList.add('is-loaded');
+                        }}
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">

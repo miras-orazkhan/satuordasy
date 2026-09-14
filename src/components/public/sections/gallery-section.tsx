@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Reveal } from '@/components/public/reveal';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -9,6 +9,7 @@ type Image = { id: string; url: string; caption: string | null };
 
 export function GallerySection({ images }: { images: Image[] }) {
   const [index, setIndex] = useState(0);
+  const stageRef = useRef<HTMLDivElement>(null);
 
   const goTo = useCallback(
     (i: number) => setIndex((i + images.length) % images.length),
@@ -66,15 +67,27 @@ export function GallerySection({ images }: { images: Image[] }) {
       {/* Full-bleed slider */}
       <div className="w-full overflow-hidden">
         <Reveal>
-          <div className="relative aspect-[16/10] md:aspect-[21/9] lg:aspect-[3/1] w-full bg-muted overflow-hidden">
+          <div
+            ref={stageRef}
+            className="relative aspect-[16/10] md:aspect-[21/9] lg:aspect-[3/1] w-full bg-muted overflow-hidden media-placeholder is-loading"
+          >
             {images.map((img, i) => (
               <img
                 key={img.id}
                 src={img.url}
                 alt={img.caption ?? 'Изображение галереи'}
-                className="absolute inset-0 h-full w-full object-cover transition-opacity duration-700"
-                style={{ opacity: i === index ? 1 : 0 }}
+                width={1920}
+                height={640}
                 loading={i === 0 ? 'eager' : 'lazy'}
+                decoding="async"
+                className="absolute inset-0 h-full w-full object-cover transition-opacity duration-700 img-fade-in"
+                style={{ opacity: i === index ? undefined : 0 }}
+                onLoad={(e) => {
+                  // Mark placeholder as loaded
+                  const stage = (e.target as HTMLImageElement).closest('.media-placeholder');
+                  if (stage) stage.classList.remove('is-loading');
+                  (e.target as HTMLImageElement).classList.add('is-loaded');
+                }}
               />
             ))}
             {images[index]?.caption && (
@@ -108,8 +121,11 @@ export function GallerySection({ images }: { images: Image[] }) {
                 <img
                   src={img.url}
                   alt=""
-                  className="absolute inset-0 h-full w-full object-cover"
+                  width={160}
+                  height={100}
                   loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 h-full w-full object-cover"
                 />
               </button>
             ))}

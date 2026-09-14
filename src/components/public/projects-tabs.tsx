@@ -62,15 +62,15 @@ export function ProjectsTabs({ projects }: { projects: ProjectItem[] }) {
           className="group relative block aspect-[4/5] md:aspect-[3/4] overflow-hidden rounded-2xl bg-muted"
         >
           {project.heroImage && (
-             
             <Image
               src={project.heroImage}
               alt={project.title}
               fill
               className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
               sizes="(max-width: 767px) calc(100vw - 3rem), 50vw"
-              quality={75}
+              quality={70}
               loading="lazy"
+              decoding="async"
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />

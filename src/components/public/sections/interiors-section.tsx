@@ -1,3 +1,5 @@
+'use client';
+
 import { Reveal } from '@/components/public/reveal';
 
 type Interior = {
@@ -7,6 +9,10 @@ type Interior = {
   description: string | null;
 };
 
+/**
+ * Client component because it uses onLoad handler on <img> for fade-in.
+ * Still server-rendered (SSR) but hydrated on client for the onLoad event.
+ */
 export function InteriorsSection({ items }: { items: Interior[] }) {
   if (!items.length) return null;
 
@@ -38,12 +44,19 @@ export function InteriorsSection({ items }: { items: Interior[] }) {
                     'md:col-span-8 ' + (i % 2 === 1 ? 'md:order-2' : '')
                   }
                 >
-                  <div className="relative aspect-[4/3] md:aspect-[16/10] overflow-hidden rounded-2xl md:rounded-3xl bg-muted">
+                  <div className="relative aspect-[4/3] md:aspect-[16/10] overflow-hidden rounded-2xl md:rounded-3xl bg-muted media-placeholder">
                     <img
                       src={item.imageUrl}
                       alt={item.caption ?? 'Интерьер'}
-                      className="absolute inset-0 h-full w-full object-cover"
+                      width={1280}
+                      height={800}
                       loading="lazy"
+                      decoding="async"
+                      className="absolute inset-0 h-full w-full object-cover img-fade-in"
+                      onLoad={(e) => {
+                        (e.target as HTMLImageElement).parentElement?.classList.remove('is-loading');
+                        (e.target as HTMLImageElement).classList.add('is-loaded');
+                      }}
                     />
                   </div>
                 </div>

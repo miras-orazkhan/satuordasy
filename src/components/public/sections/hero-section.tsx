@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { ArrowDown } from 'lucide-react';
@@ -14,24 +14,40 @@ type HeroProps = {
   mobileImage?: string | null;
 };
 
-function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined' || !window.matchMedia) return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
+/**
+ * Hero with subtle parallax (disabled when prefers-reduced-motion).
+ *
+ * Image optimisation:
+ *   - Hero image is fetched with `priority` (high-priority LCP fetch).
+ *   - Inline SVG blur placeholder avoids layout shift on slow connections.
+ *   - Image fades in only after it actually loads (no premature fade).
+ */
 export function HeroSection({ title, subtitle, ctaText, desktopImage, mobileImage }: HeroProps) {
-  // Subtle parallax on hero image — one signature motion per page (Apple-style).
-  // Disabled when prefers-reduced-motion.
   const [scrollY, setScrollY] = useState(0);
-  const [reduced, setReduced] = useState<boolean>(() => prefersReducedMotion());
+  const [reduced, setReduced] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReduced(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   useEffect(() => {
     if (reduced) return;
-
+    let ticking = false;
     const onScroll = () => {
-      queueMicrotask(() => setScrollY(window.scrollY));
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        setScrollY(window.scrollY);
+        ticking = false;
+      });
     };
-    onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, [reduced]);
@@ -39,29 +55,47 @@ export function HeroSection({ title, subtitle, ctaText, desktopImage, mobileImag
   const translateY = reduced ? 0 : Math.min(scrollY * 0.35, 200);
   const scale = reduced ? 1 : 1 + Math.min(scrollY * 0.0003, 0.06);
 
+  const imgSrc = desktopImage || mobileImage || '';
+
   return (
     <section
       className="relative h-[92vh] min-h-[560px] w-full overflow-hidden"
       aria-label="Главный экран"
     >
       <div className="absolute inset-0 overflow-hidden">
-        { }
-        <Image
-          src={desktopImage || mobileImage || ''}
-          alt={title}
-          fill
-          className="absolute inset-0 h-full w-full object-cover will-change-transform"
-          style={{ transform: `translate3d(0, ${translateY}px, 0) scale(${scale})` }}
-          sizes="100vw"
-          quality={75}
-          priority
+        {/* Blur placeholder while hero image is loading — no layout shift */}
+        <div
+          className="absolute inset-0 bg-gradient-to-b from-muted via-muted/80 to-background"
+          aria-hidden="true"
+          style={{
+            opacity: imgLoaded ? 0 : 1,
+            transition: 'opacity 0.5s ease',
+          }}
         />
+        {imgSrc && (
+          <Image
+            ref={imgRef as any}
+            src={imgSrc}
+            alt={title}
+            fill
+            className="absolute inset-0 h-full w-full object-cover will-change-transform"
+            style={{
+              transform: `translate3d(0, ${translateY}px, 0) scale(${scale})`,
+              opacity: imgLoaded ? 1 : 0,
+              transition: 'opacity 0.5s ease',
+            }}
+            sizes="100vw"
+            quality={72}
+            priority
+            fetchPriority="high"
+            onLoad={() => setImgLoaded(true)}
+          />
+        )}
       </div>
-      {/* Single subtle bottom gradient for text readability — no decorative stripes */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
       <div className="container-premium relative h-full flex flex-col justify-end pb-16 md:pb-28">
-        <HeroFade>
+        <HeroFade reduced={reduced}>
           <h1 className="text-white text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-balance max-w-5xl">
             {title}
           </h1>
@@ -92,7 +126,19 @@ export function HeroSection({ title, subtitle, ctaText, desktopImage, mobileImag
   );
 }
 
-// Lightweight inline fade-in on mount — uses tw-animate-css classes, no JS animation
-function HeroFade({ children }: { children: React.ReactNode }) {
-  return <div className="animate-in fade-in duration-1000 fill-mode-both">{children}</div>;
+/**
+ * Inline fade-in on mount — uses CSS transition, no JS animation library.
+ * Respects prefers-reduced-motion (renders plain children).
+ */
+function HeroFade({ children, reduced }: { children: React.ReactNode; reduced: boolean }) {
+  if (reduced) return <>{children}</>;
+  return (
+    <div
+      style={{
+        animation: 'heroFadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) both',
+      }}
+    >
+      {children}
+    </div>
+  );
 }

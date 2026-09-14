@@ -63,15 +63,15 @@ export default async function Home() {
       {/* Hero — clean, no decorative stripes */}
       <section className="relative h-[70vh] min-h-[480px] w-full overflow-hidden">
         {home.heroImage ? (
-           
           <Image
             src={home.heroImage}
             alt={siteName}
             fill
             className="absolute inset-0 h-full w-full object-cover"
             sizes="100vw"
-            quality={75}
+            quality={72}
             priority
+            fetchPriority="high"
           />
         ) : (
           <div className="absolute inset-0 bg-muted" />
