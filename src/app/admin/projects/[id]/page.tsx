@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import { requireAdmin } from '@/lib/session';
 import { getProjectForAdmin } from '@/lib/queries';
-import { listCustomIcons } from '@/lib/settings';
+import { listCustomIcons, getFooter } from '@/lib/settings';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +17,7 @@ import { InteriorsEditor } from '@/components/admin/forms/interiors-editor';
 import { CatalogEditor } from '@/components/admin/forms/catalog-editor';
 import { SocialLinksEditor } from '@/components/admin/forms/social-links-editor';
 import { LeadFormEditor } from '@/components/admin/forms/lead-form-editor';
+import { ProjectFooterForm } from '@/components/admin/forms/project-footer-form';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,9 +26,10 @@ type Params = { params: Promise<{ id: string }> };
 export default async function EditProjectPage({ params }: Params) {
   await requireAdmin();
   const { id } = await params;
-  const [project, customIcons] = await Promise.all([
+  const [project, customIcons, globalFooter] = await Promise.all([
     getProjectForAdmin(id),
     listCustomIcons(),
+    getFooter(),
   ]);
   if (!project) notFound();
 
@@ -70,6 +72,11 @@ export default async function EditProjectPage({ params }: Params) {
       <CatalogEditor catalog={project.catalog} projectId={project.id} />
       <LeadFormEditor config={project.leadForm} projectId={project.id} />
       <SocialLinksEditor items={project.socials} projectId={project.id} />
+      <ProjectFooterForm
+        projectId={project.id}
+        projectFooter={project.projectFooter}
+        globalFooter={globalFooter}
+      />
     </div>
   );
 }

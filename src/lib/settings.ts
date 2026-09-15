@@ -162,6 +162,47 @@ export async function setFooter(data: FooterData): Promise<void> {
   });
 }
 
+/**
+ * Merge a project-specific footer override with the global footer.
+ * For each field: if the project footer has a non-null value, use it;
+ * otherwise fall back to the global footer's value.
+ *
+ * @param projectFooter - the per-project ProjectFooter record (or null)
+ * @param globalFooter   - the global Footer singleton
+ * @returns merged FooterData to render
+ */
+export function mergeProjectFooter(
+  projectFooter: {
+    phone: string | null;
+    email: string | null;
+    address: string | null;
+    legalName: string | null;
+    bin: string | null;
+    iik: string | null;
+    bankName: string | null;
+    bic: string | null;
+    workingHours: string | null;
+    copyrightText: string | null;
+    disclaimer: string | null;
+  } | null,
+  globalFooter: FooterData
+): FooterData {
+  if (!projectFooter) return globalFooter;
+  return {
+    phone: projectFooter.phone ?? globalFooter.phone,
+    email: projectFooter.email ?? globalFooter.email,
+    address: projectFooter.address ?? globalFooter.address,
+    legalName: projectFooter.legalName ?? globalFooter.legalName,
+    bin: projectFooter.bin ?? globalFooter.bin,
+    iik: projectFooter.iik ?? globalFooter.iik,
+    bankName: projectFooter.bankName ?? globalFooter.bankName,
+    bic: projectFooter.bic ?? globalFooter.bic,
+    workingHours: projectFooter.workingHours ?? globalFooter.workingHours,
+    copyrightText: projectFooter.copyrightText ?? globalFooter.copyrightText,
+    disclaimer: projectFooter.disclaimer ?? globalFooter.disclaimer,
+  };
+}
+
 // ---------- HOME PAGE (editable) ----------
 const DEFAULT_HOME: { title: string; subtitle: string | null; heroImage: string | null; logoUrl: string | null } = {
   title: 'Satu Ordasy',

@@ -112,3 +112,82 @@ export async function toggleProjectStatus(id: string): Promise<{ ok: boolean; er
     return { ok: false, error: 'Не удалось изменить статус' };
   }
 }
+
+// ---------- PROJECT FOOTER (per-project override) ----------
+// Each field overrides the global Footer singleton for this specific project.
+// Null fields fall back to the global footer value.
+export async function updateProjectFooter(
+  projectId: string,
+  input: {
+    phone?: string;
+    email?: string;
+    address?: string;
+    legalName?: string;
+    bin?: string;
+    iik?: string;
+    bankName?: string;
+    bic?: string;
+    workingHours?: string;
+    copyrightText?: string;
+    disclaimer?: string;
+  }
+): Promise<{ ok: boolean; error?: string }> {
+  if (!projectId) return { ok: false, error: 'projectId required' };
+  try {
+    // Find slug for revalidatePath
+    const project = await db.project.findUnique({ where: { id: projectId }, select: { slug: true } });
+    if (!project) return { ok: false, error: 'Проект не найден' };
+
+    await db.projectFooter.upsert({
+      where: { projectId },
+      create: {
+        projectId,
+        phone: input.phone || null,
+        email: input.email || null,
+        address: input.address || null,
+        legalName: input.legalName || null,
+        bin: input.bin || null,
+        iik: input.iik || null,
+        bankName: input.bankName || null,
+        bic: input.bic || null,
+        workingHours: input.workingHours || null,
+        copyrightText: input.copyrightText || null,
+        disclaimer: input.disclaimer || null,
+      },
+      update: {
+        phone: input.phone || null,
+        email: input.email || null,
+        address: input.address || null,
+        legalName: input.legalName || null,
+        bin: input.bin || null,
+        iik: input.iik || null,
+        bankName: input.bankName || null,
+        bic: input.bic || null,
+        workingHours: input.workingHours || null,
+        copyrightText: input.copyrightText || null,
+        disclaimer: input.disclaimer || null,
+      },
+    });
+    revalidatePath(`/zhk/${project.slug}`);
+    revalidatePath(`/admin/projects/${projectId}`);
+    return { ok: true };
+  } catch (e: any) {
+    return { ok: false, error: 'Ошибка: ' + (e?.message ?? 'unknown') };
+  }
+}
+
+/**
+ * Delete the per-project footer override — reverts to using the global Footer.
+ */
+export async function resetProjectFooter(projectId: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const project = await db.project.findUnique({ where: { id: projectId }, select: { slug: true } });
+    if (!project) return { ok: false, error: 'Проект не найден' };
+    await db.projectFooter.deleteMany({ where: { projectId } });
+    revalidatePath(`/zhk/${project.slug}`);
+    revalidatePath(`/admin/projects/${projectId}`);
+    return { ok: true };
+  } catch {
+    return { ok: false, error: 'Не удалось сбросить подвал' };
+  }
+}

@@ -37,6 +37,7 @@ export const getPublishedProjectBySlug = unstable_cache(
         catalog: true,
         socials: { orderBy: { sortOrder: 'asc' } },
         leadForm: true,
+        projectFooter: true,
       },
     });
     // Strip Date objects so the result can be passed to 'use client' components
@@ -70,6 +71,7 @@ export async function getProjectForAdmin(id: string) {
       catalog: true,
       socials: { orderBy: { sortOrder: 'asc' } },
       leadForm: true,
+      projectFooter: true,
     },
   });
   return project ? toSerializable(project) : null;

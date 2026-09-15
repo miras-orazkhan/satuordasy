@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { db } from '@/lib/db';
 import { getPublishedProjectBySlug, getGlobalSocials } from '@/lib/queries';
-import { getSetting, getFooter } from '@/lib/settings';
+import { getSetting, getFooter, mergeProjectFooter } from '@/lib/settings';
 import { getThemePreset, getFontPreset } from '@/lib/theme-presets';
 import { HeroSection } from '@/components/public/sections/hero-section';
 import { AdvantagesSection } from '@/components/public/sections/advantages-section';
@@ -69,7 +69,9 @@ export default async function ProjectPage({ params }: Params) {
   if (!project) notFound();
 
   const brandName = await getSetting('brandName');
-  const footer = await getFooter();
+  const globalFooter = await getFooter();
+  // Merge project footer overrides (if any) with global footer
+  const footer = mergeProjectFooter(project.projectFooter, globalFooter);
   const globalSocials = await getGlobalSocials();
   const socials = project.socials.length > 0 ? project.socials : globalSocials;
 
